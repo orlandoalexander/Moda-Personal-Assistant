@@ -1,3 +1,5 @@
 Data/
+build/
+preproc.egg-info/
 
 .DS_Store
