@@ -6,20 +6,19 @@ Add General notes to the top of this file and notes about your model in this fil
 
 ## Attributes
 
-1. Design
-  7 Categories:
-  - Floral
-  - Graphic
-  - Striped
-  - Embroidered
-  - Pleated
-  - Solid
-  - Lattice (Plaid)
+**1. Design**
+  - 7 Categories:
+    - Floral
+    - Graphic
+    - Striped
+    - Embroidered
+    - Pleated
+    - Solid
+    - Lattice (Plaid)
 
 
-2. Sleeves
-
-  Can take the full dataframe (data_full) but would it be best to pass it a
+**2. Sleeves**
+  - Can take the full dataframe (data_full) but would it be best to pass it a
   prefiltered dataframe? (Without other columns and 'lower)
 
   Same question for the other Models
