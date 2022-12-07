@@ -13,7 +13,8 @@ pip install --upgrade pip
 git clone -b preproc_package https://github.com/orlandoalexander/Moda-Personal-Assistant.git
 ```
 3. Install the package: 
-```%cd Moda-Personal-Assistant
+```
+cd Moda-Personal-Assistant
 pip install -e .
 ```
 4. Import the package:
