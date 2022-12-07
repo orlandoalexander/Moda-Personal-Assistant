@@ -7,6 +7,7 @@ Add General notes to the top of this file and notes about your model in this fil
 ## Attributes
 
 **1. Design**
+  - All sections
   - 7 Categories:
     - Floral
     - Graphic
@@ -18,9 +19,7 @@ Add General notes to the top of this file and notes about your model in this fil
 
 
 **2. Sleeves**
-  - Can take the full dataframe (data_full) but would it be best to pass it a
-  prefiltered dataframe? (Without other columns and 'lower)
-  - Same question for the other Models
+  - Only Upper and Full Body sections (others dropped in training)
   - 3 Categories:
     - Long
     - Short
@@ -28,15 +27,13 @@ Add General notes to the top of this file and notes about your model in this fil
 
 
 **3. Length**
-
-  - Should be passed only dresses for speed and to drop 'no dress' column. Otherwise performing unnecessary train/predict tasks with another feature, more data.
+  - Only Full Body sections (others dropped in training)
   - 2 Categories:
     - Maxi
     - Mini
 
 **4. Neckline**
-
-  - Only distinguishes necklines, so should be renamed and again shouldn't be passed 'lower'
+  - Only Upper and Full Body sections (others dropped in training)
   - 4 Categories:
     - Crew
     - V
@@ -44,6 +41,7 @@ Add General notes to the top of this file and notes about your model in this fil
     - None
 
 **5. Fabric**
+    - All sections
     - 6 Categories:
       - Denim
       - Chiffon
@@ -53,6 +51,7 @@ Add General notes to the top of this file and notes about your model in this fil
       - Knit
 
 **6. Fit**
+    - All sections
     - 3 Categories:
       - Tight
       - Loose
