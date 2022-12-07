@@ -34,7 +34,7 @@ Add General notes to the top of this file and notes about your model in this fil
     - Maxi
     - Mini
 
-**4. Part (Let's rename this "Neckline")**
+**4. Neckline**
 
   - Only distinguishes necklines, so should be renamed and again shouldn't be passed 'lower'
   - 4 Categories:
