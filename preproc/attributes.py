@@ -12,7 +12,7 @@ import gc
 
 class Preproc():
     """
-    prep = Preproc(data_full, path_to_img_folder_on_laptop, resize_dim_tuple, attribute_group, test_size)
+    prep = Preproc(path_to_img_folder_on_laptop, resize_dim_tuple, attribute_group, test_size)
     X_train, X_test, y_train, y_test = prep.run()
     """
     def __init__(self, path_img: str, resize_dim: tuple, attr_group: str, test_size: float):
