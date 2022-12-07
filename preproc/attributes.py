@@ -1,5 +1,4 @@
 # TODO: implement preprocessing for category and section models
-# TODO: add feature preprocessing depending on the attribute type
 
 import pandas as pd
 import numpy as np
@@ -10,7 +9,7 @@ from sklearn.model_selection import train_test_split
 import gc
 
 
-class Preproc():
+class AttributePreproc():
     """
     prep = Preproc(path_to_img_folder_on_laptop, resize_dim_tuple, attribute_group, test_size)
     X_train, X_test, y_train, y_test = prep.run()
@@ -29,14 +28,22 @@ class Preproc():
 
         self._df_preproc = self._preproc_dataframe()
 
-        self._mean = round(self._df_preproc.iloc[:,1:self._index_range_attr[-1]-self._index_range_attr[0]+2].apply(pd.value_counts).iloc[1,:].mean()) # mean number of images in each attribute class
+        self._df_preproc_train, self._df_preproc_test = self._train_test_split()
 
-        self._attr_counts = list(self._df_preproc.iloc[:,1:self._index_range_attr[-1]-self._index_range_attr[0]+2].apply(pd.value_counts).iloc[1,:].items()) # number of images in each attribute class (list of tuples)
+        del self._df_preproc
+        gc.collect()
+
+        self._mean = round(self._df_preproc_train.iloc[:,1:self._index_range_attr[-1]-self._index_range_attr[0]+2].apply(pd.value_counts).iloc[1,:].mean()) # mean number of images in each attribute class in training data set
+
+        self._attr_counts = list(self._df_preproc_train.iloc[:,1:self._index_range_attr[-1]-self._index_range_attr[0]+2].apply(pd.value_counts).iloc[1,:].items()) # number of images in each attribute class (list of tuples) in training data set
 
     def run(self):
         self._X_train, self._y_train = self._preproc_arrays()
-        self._y_train = np.array(list(self._y_train))
-        return self._train_test_split()
+        self._df_preproc_test['img'] = self._df_preproc_test.apply(lambda row: self._format_image(row[0], *row[-4:]),axis=1)
+        self._X_test, self._y_test = self._df_preproc_test.iloc[:,1:-4], self._df_preproc_test.iloc[:,0]
+        self._y_train, self._y_test = np.array(list(self._y_train)), np.array(list(self._y_test))
+        print('Done!')
+        return self._X_train, self._X_test, self._y_train, self._y_test
 
     def _get_df(self): # get formatted data frame
         # Categories:
@@ -98,7 +105,7 @@ class Preproc():
         for attr, count in self._attr_counts:
             if count >= self._mean: # if number of attribute samples is greater than mean number of samples for the attribute group --> undersample
                 print(f"Augmenting attribute '{attr}'...")
-                sample_df = self._df_preproc[self._df_preproc[attr]==1].sample(self._mean,random_state=2) # sample of images corresponding to mean number of samples for the attribute group
+                sample_df = self._df_preproc_train[self._df_preproc_train[attr]==1].sample(self._mean,random_state=2) # sample of images corresponding to mean number of samples for the attribute group
                 sample_df['img'] = sample_df.apply(lambda row: self._format_image(row[0], *row[-4:]),axis=1) # format (crop and pad) each sampled image and convert to numpy array
                 sample_df = sample_df.iloc[:,:-4] # only store formatted numpy arrays and attribute columns
             else: # if number of attribute samples is less than mean number of samples for the attribute group --> oversample
@@ -112,10 +119,10 @@ class Preproc():
                     remaining_sum-=1
                     i = (i+1)%len(sample_values)
                 sample_df = pd.DataFrame() # empty dataframe to store augmented images
-                for index, row in enumerate(self._df_preproc[self._df_preproc[attr]==1].values): # iterate over each image beloning to current attribute
+                for index, row in enumerate(self._df_preproc_train[self._df_preproc_train[attr]==1].values): # iterate over each image beloning to current attribute
                     sample = sample_values[index] # number of samples to be made for current image
                     cropped_img_array = self._format_image(row[0], *row[-4:]) # format (crop and pad) image and convert to numpy array
-                    temp_oversample_df = pd.concat([pd.DataFrame([row], columns = self._df_preproc.columns).iloc[:,:-4]]*(sample+1),ignore_index=True) # dataframe to store oversampled images
+                    temp_oversample_df = pd.concat([pd.DataFrame([row], columns = self._df_preproc_train.columns).iloc[:,:-4]]*(sample+1),ignore_index=True) # dataframe to store oversampled images
                     augmented_img_array = []
                     if sample != 0: # if at least one augmentation must be made
                         augmented_img_array = self._augment(cropped_img_array,sample) # augment image 'sample' times and convert each augmentation to numpy array
@@ -157,6 +164,5 @@ class Preproc():
         return arrays
 
     def _train_test_split(self):
-        self._X_train, X_test, self._y_train, y_test = train_test_split(self._X_train, self._y_train, test_size = self._test_size,random_state=2)
-        print('Done!')
-        return self._X_train, X_test, self._y_train, y_test
+        self._df_preproc_train, self._df_preproc_test = train_test_split(self._df_preproc, test_size = self._test_size,random_state=2)
+        return self._df_preproc_train, self._df_preproc_test
