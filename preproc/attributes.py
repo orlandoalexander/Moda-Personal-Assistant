@@ -15,17 +15,17 @@ class Preproc():
     prep = Preproc(data_full, path_to_img_folder_on_laptop, resize_dim_tuple, attribute_group, test_size)
     X_train, X_test, y_train, y_test = prep.run()
     """
-    def __init__(self, df: pd.DataFrame, path_img: str, resize_dim: tuple, attr_group: str, test_size: float):
-        self._df = df
+    def __init__(self, path_img: str, resize_dim: tuple, attr_group: str, test_size: float):
+        location = os.path.dirname(os.path.realpath(__file__))
         self._path_img = path_img
         self._resize_dim = resize_dim
-        self._attr_group = attr_group
+        self._attr_group = attr_group.lower()
         self._test_size = test_size
+        self._path_data = os.path.join(location, 'preproc_data')
+        self._df = self._get_df()
 
-        location = os.path.dirname(os.path.realpath(__file__))
-        attr_names_path = os.path.join(location, 'preproc_data', 'list_attr_simple.txt')
-        self._attr_names = pd.read_csv(attr_names_path,sep='\s+', header=None).rename(columns={0:'attribute',1:'attribute_type'})
-        self._attr_names['attribute_type'] = self._attr_names['attribute_type'].map({1:'design',2:'sleeves',3:'length',4:'part',5:'fabric',6:'fit'})
+        self._attr_names = pd.read_csv(os.path.join(self._path_data,'list_attr_simple.txt'),sep='\s+', header=None).rename(columns={0:'attribute',1:'attribute_type'})
+        self._attr_names['attribute_type'] = self._attr_names['attribute_type'].map({1:'design',2:'sleeves',3:'length',4:'neckline',5:'fabric',6:'fit'})
 
         self._df_preproc = self._preproc_dataframe()
 
@@ -37,6 +37,39 @@ class Preproc():
         self._X_train, self._y_train = self._preproc_arrays()
         self._y_train = np.array(list(self._y_train))
         return self._train_test_split()
+
+    def _get_df(self): # get formatted data frame
+        # Categories:
+        cat_names = pd.read_csv(os.path.join(self._path_data,'list_category.txt'),sep ='\s+',header=None).reset_index().rename(columns={0:'category',1:'section','index':'cat_num'})
+        cat_names['cat_num'] = cat_names['cat_num'].apply(lambda x : x+1)
+        cat_tag = pd.read_csv(os.path.join(self._path_data,'tag_cat_simple.txt'),sep='\s+',header=None,names=['category']).rename(columns={'category':'cat_num'})
+        cat_img = pd.read_csv(os.path.join(self._path_data,'img_simple.txt'),sep='\s+',header=None,names=['category']).rename(columns={'category':'img'})
+        cat_num = cat_img.join(cat_tag)
+        cat = cat_num.merge(cat_names, on='cat_num', how='left').drop(columns='cat_num')
+        cat['img'] = cat['img'].apply(lambda x: x[4:])
+        cat['section'] = cat['section'].map({1:'upper',2:'lower',3:'full body'})
+
+        # Attributes:
+        attr_names = pd.read_csv(os.path.join(self._path_data,'list_attr_simple.txt'),sep='\s+', header=None).rename(columns={0:'attribute',1:'attribute_type'})
+        attr_names['attribute_type'] = attr_names['attribute_type'].map({1:'design',2:'sleeves',3:'length',4:'neckline',5:'fabric',6:'fit'})
+        attr_names_headers = attr_names.iloc[:,0]
+        attr_tags = pd.read_csv(os.path.join(self._path_data,'tags_attr_simple.txt'),sep='\s+',header=None,names=attr_names_headers)
+        attr_img = pd.read_csv(os.path.join(self._path_data,'img_simple.txt'),sep='\s+',header=None).rename(columns={0:'img'})
+        attr = attr_img.join(attr_tags,how='inner').drop(columns='img')
+
+        # Bounding Boxes:
+        bb = pd.read_csv(os.path.join(self._path_data,'bbox.txt'),sep='\s+',header=None,index_col=False, names=['img','x_1', 'y_1', 'x_2', 'y_2'])
+        bb['img'] = bb['img'].apply(lambda x: x[4:])
+
+        # Landmarks:
+        landmarks = pd.read_csv(os.path.join(self._path_data,'landmarks.txt'),sep='\s+',names=['img','clothes_type','v1','x1','y1','v2','x2','y2','v3','x3','y3','v4','x4','y4','v5','x5','y5','v6','x6','y6','v7','x7','y7','v8','x8','y8']).fillna(0).drop(columns=['clothes_type'])
+        landmarks['img'] = landmarks['img'].apply(lambda x: x[4:])
+
+        # Create full data set:
+        data_full = cat.join(attr,how='left').merge(bb,how='left',on='img').merge(landmarks, how='left',on='img')
+
+        return data_full
+
 
     def _preproc_dataframe(self): # preprocess the dataframe
         # attribute indexes:
@@ -93,7 +126,7 @@ class Preproc():
 
 
     def _format_image(self, img_name, x1, y1, x2, y2): # crop image by bounding box and resize according to 'resize_dim'
-        full_path = self._path_img+img_name # path to image on user's machine
+        full_path = os.path.join(self._path_img,img_name) # path to image on user's machine
         img = Image.open(full_path) # load images
         cropped = img.crop((x1, y1, x2, y2)) # crop images
         cropped_pad = ImageOps.pad(cropped,self._resize_dim,color=(255,255,255)) # pad image with white background
