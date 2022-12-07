@@ -28,6 +28,7 @@ class Preproc():
         self._attr_names['attribute_type'] = self._attr_names['attribute_type'].map({1:'design',2:'sleeves',3:'length',4:'neckline',5:'fabric',6:'fit'})
 
         self._df_preproc = self._preproc_dataframe()
+        print(self._df_preproc.shape)
 
         self._mean = round(self._df_preproc.iloc[:,1:-4].apply(pd.value_counts).iloc[1,:].mean()) # mean number of images in each attribute class
 
@@ -67,6 +68,12 @@ class Preproc():
 
         # Create full data set:
         data_full = cat.join(attr,how='left').merge(bb,how='left',on='img').merge(landmarks, how='left',on='img')
+
+        # Drop invalid rows:
+        if self._attr_group in ['neckline','sleeves']:
+            data_full = data_full[data_full['section']!='lower'] # drop all images classified as 'lower'
+        if self._attr_group == 'length':
+            data_full = data_full[(data_full['section']=='outfit') | (data_full['section']!='full body')] # drop all images classified as 'lower' or 'upper
 
         return data_full
 
