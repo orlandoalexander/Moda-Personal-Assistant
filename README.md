@@ -8,14 +8,16 @@
 ```
 pip install --upgrade pip
 ```
-3. Clone the package repo:
-```git clone -b preproc_package https://github.com/orlandoalexander/Moda-Personal-Assistant.git
+2. Clone the package repo (only for Google Colab):
 ```
-5. Install the package: 
-```%cd Moda-Personal-Assistant
-! pip install .
+git clone -b preproc_package https://github.com/orlandoalexander/Moda-Personal-Assistant.git
 ```
-4. Import the package:
+3. Install the package: 
+```
+cd Moda-Personal-Assistant
+pip install -e .
+```
+4. Import the package from within Python:
 ```
 from preproc.attributes import Preproc
 ```
