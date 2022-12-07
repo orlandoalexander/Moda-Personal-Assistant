@@ -1,14 +1,12 @@
-Models folder with python file for each attribute type
+Models folder with python file for each model
 
-One .py file for each type.
 Each file should contain a class with the name of the type (and the name of the file)
 
 Add General notes to the top of this file and notes about your model in this file (below):
 
-
+#Attributes
 
 1. Design
-
   7 Categories:
   - Floral
   - Graphic
@@ -65,3 +63,8 @@ Add General notes to the top of this file and notes about your model in this fil
     - Tight
     - Loose
     - Conventional
+    
+## Categories
+
+  46 categories
+ 
