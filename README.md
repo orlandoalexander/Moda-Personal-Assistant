@@ -17,7 +17,7 @@ git clone -b preproc_package https://github.com/orlandoalexander/Moda-Personal-A
 cd Moda-Personal-Assistant
 pip install -e .
 ```
-4. Import the package:
+4. Import the package from within Python:
 ```
 from preproc.attributes import Preproc
 ```
