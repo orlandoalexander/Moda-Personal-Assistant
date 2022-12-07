@@ -4,9 +4,14 @@
 
 - Works in Google Colab, Jupyter and CLI
 
-1. Make sure `pip` is updated by running `pip install --upgrade pip`
-2. Clone the package repo with `git clone -b preproc_package https://github.com/orlandoalexander/Moda-Personal-Assistant.git`
-3. Install the package: 
+1. Make sure `pip` is updated:
+```
+pip install --upgrade pip
+```
+3. Clone the package repo:
+```git clone -b preproc_package https://github.com/orlandoalexander/Moda-Personal-Assistant.git
+```
+5. Install the package: 
 ```%cd Moda-Personal-Assistant
 ! pip install .
 ```
