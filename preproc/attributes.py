@@ -23,7 +23,7 @@ class Preproc():
         self._test_size = test_size
 
         location = os.path.dirname(os.path.realpath(__file__))
-        attr_names_path = os.path.join(location, 'data', 'list_attr_simple.txt')
+        attr_names_path = os.path.join(location, 'preproc_data', 'list_attr_simple.txt')
         self._attr_names = pd.read_csv(attr_names_path,sep='\s+', header=None).rename(columns={0:'attribute',1:'attribute_type'})
         self._attr_names['attribute_type'] = self._attr_names['attribute_type'].map({1:'design',2:'sleeves',3:'length',4:'part',5:'fabric',6:'fit'})
 
