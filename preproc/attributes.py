@@ -28,11 +28,10 @@ class Preproc():
         self._attr_names['attribute_type'] = self._attr_names['attribute_type'].map({1:'design',2:'sleeves',3:'length',4:'neckline',5:'fabric',6:'fit'})
 
         self._df_preproc = self._preproc_dataframe()
-        print(self._df_preproc.shape)
 
-        self._mean = round(self._df_preproc.iloc[:,1:-4].apply(pd.value_counts).iloc[1,:].mean()) # mean number of images in each attribute class
+        self._mean = round(self._df_preproc.iloc[:,1:self._index_range_attr[-1]-self._index_range_attr[0]+2].apply(pd.value_counts).iloc[1,:].mean()) # mean number of images in each attribute class
 
-        self._attr_counts = list(self._df_preproc.iloc[:,1:-4].apply(pd.value_counts).iloc[1,:].items()) # number of images in each attribute class (list of tuples)
+        self._attr_counts = list(self._df_preproc.iloc[:,1:self._index_range_attr[-1]-self._index_range_attr[0]+2].apply(pd.value_counts).iloc[1,:].items()) # number of images in each attribute class (list of tuples)
 
     def run(self):
         self._X_train, self._y_train = self._preproc_arrays()
@@ -82,8 +81,8 @@ class Preproc():
         # attribute indexes:
         first_attr = self._attr_names[self._attr_names['attribute_type']==self._attr_group].iloc[0,0] # name of first attribute in selected attributed group
         start_index_attr = np.where(self._df.columns==first_attr)[0] # index of first attribute in selected attribute group within passed dataframe
-        index_range_attr = np.where(self._attr_names['attribute_type'].values==self._attr_group)[0] # range of indexes of attributes within selected attribute group
-        end_index_attr = start_index_attr+(index_range_attr[-1]-index_range_attr[0])+1 # index of final attribute in selected attribute group within passed dataframe
+        self._index_range_attr = np.where(self._attr_names['attribute_type'].values==self._attr_group)[0] # range of indexes of attributes within selected attribute group
+        end_index_attr = start_index_attr+(self._index_range_attr[-1]-self._index_range_attr[0])+1 # index of final attribute in selected attribute group within passed dataframe
 
         # bounding box indexes:
         start_index_bb = np.where(self._df.columns=='x_1')[0] # index of 'x_1' column in passed dataframe
