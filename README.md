@@ -14,7 +14,7 @@ git clone -b preproc_package https://github.com/orlandoalexander/Moda-Personal-A
 ```
 3. Install the package: 
 ```%cd Moda-Personal-Assistant
-! pip install -e .
+pip install -e .
 ```
 4. Import the package:
 ```
