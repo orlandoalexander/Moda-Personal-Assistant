@@ -4,7 +4,7 @@ Each file should contain a class with the name of the type (and the name of the 
 
 Add General notes to the top of this file and notes about your model in this file (below):
 
-#Attributes
+## Attributes
 
 1. Design
   7 Categories:
