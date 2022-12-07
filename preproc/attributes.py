@@ -1,5 +1,5 @@
 # TODO: implement preprocessing for category and section models
-# TODO: deal with sleeves and lower body images issue
+# TODO: add feature preprocessing depending on the attribute type
 
 import pandas as pd
 import numpy as np
