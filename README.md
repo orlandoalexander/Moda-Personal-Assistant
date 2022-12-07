@@ -8,7 +8,7 @@
 ```
 pip install --upgrade pip
 ```
-2. Clone the package repo:
+2. Clone the package repo (only for Google Colab):
 ```
 git clone -b preproc_package https://github.com/orlandoalexander/Moda-Personal-Assistant.git
 ```
