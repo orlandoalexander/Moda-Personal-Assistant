@@ -14,7 +14,7 @@ import numpy as np
 
 # Data will be split but here I add a split_data function
 
-DATA_FULL_PATH = '//wsl.localhost/Ubuntu/home/nigel/code/jwnigel/moda-project/code/jwnigel/Moda-Personal-Assistant/Models/data_full.csv'
+# Works with data_full passed for data
 
 class Model:
     def __init__(self, attribute,
@@ -30,24 +30,24 @@ class Model:
                     'fabric': [np.r_[0,20:26], 6],
                     'fit': [np.r_[0,26:29], 3]
                 }
-        self.data = data[:, attributes[attribute][0]]   # only img and design columns
+        self.data = data.iloc[self.attributes[attribute][0]]  # only img and design columns
         self.img_shape = img_shape
-        self.num_cats = attributes[attribute][1]
+        self.num_cats = self.attributes[attribute][1]
         self.model = self.instatiate_inception()
         self.X_train, self.X_test, self.y_train, self.y_test = self.split_data()
 
     def split_data(self):
         # Split data into train and test
-        self.X_train, self.X_test,
-        self.y_train, self.y_test = train_test_split(
+        X_train, X_test, y_train, y_test = train_test_split(
             self.data['img'], self.data.drop(columns='img'),
             test_size=0.3, random_state=2)
-        return self.X_train, self.X_test, self.y_train, self.y_test
+        return X_train, X_test, y_train, y_test
 
     def instatiate_inception(self):                     # Inception V3 model
         input_layer = Input(shape=(299,299,3))          # Image size (299, 299) specific to Inception V3
         inception = InceptionV3(include_top=False, weights='imagenet', input_tensor=input_layer)
-        inception.layers.trainable = False               # Freeze layers
+        for layer in inception.layers:
+            layer.trainable = False               # Freeze layers
         model = Sequential(inception)
         model.add(Flatten())
         model.add(Dense(500))                           # Let's play with these last layers
@@ -55,11 +55,10 @@ class Model:
             model.add(Dense(2, activation='sigmoid'))
         else:
             model.add(Dense(self.num_cats, activation='softmax'))
-
-        model.add(Dense(, activation='softmax'))
         model.compile(loss='categorical_crossentropy',
                     optimizer='adam',
                     metrics=[Precision(), Recall()])
+        return model
 
     def train(self):
         history = self.model.fit(np.array(self.X_train), self.y_train,
