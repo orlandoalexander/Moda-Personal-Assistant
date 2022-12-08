@@ -8,24 +8,19 @@
 ```
 pip install --upgrade pip
 ```
-2. Clone the package repo (only for Google Colab):
+2. Install the package:
 ```
-git clone -b preproc_package https://github.com/orlandoalexander/Moda-Personal-Assistant.git
+pip install git+https://github.com/orlandoalexander/Moda-Personal-Assistant.git@preproc_package
 ```
-3. Install the package: 
-```
-cd Moda-Personal-Assistant
-pip install -e .
-```
-4. Import the package from within Python:
+3. Import the package from within Python:
 ```
 from preproc.attributes import AttributePreproc
 ```
-5. Initialise with desired parameters:
+4. Initialise with desired parameters:
 ```
 prep = AttributePreproc(path_to_img_folder, resized_shape_tuple, attribute_group, test_size) # e.g. AttributePreproc(folder/img, (256,256), 'fabric', 0.2)
 ```
-6. Run the preprocessor:
+5. Run the preprocessor:
 ```
 X_train, X_test, y_train, y_test = prep.run()
 ```
