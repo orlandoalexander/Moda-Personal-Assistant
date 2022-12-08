@@ -1,8 +1,11 @@
 import numpy as np
 import pandas as pd
 
+from keras.callbacks import EarlyStopping
+
 from keras.layers import Input, Dense, Flatten
 from keras.metrics import Precision, Recall
+from keras.optimizers import Adam
 
 from keras.applications import InceptionV3
 from keras.applications import inception_v3
@@ -20,7 +23,7 @@ from keras.applications import efficientnet
 # 'inception', 'resnet', 'mobilenet', 'efficientnet'
 
 class AttrModel:
-    def __init__(self, attribute, model, input_shape, final_layer_neurons,
+    def __init__(self, data, attribute, model, input_shape, final_layer_neurons,
                  X_train, X_test,
                  y_train, y_test, **kwargs):
         self.attribute = attribute
@@ -28,7 +31,7 @@ class AttrModel:
         self.input_shape = input_shape
         self.final_layer_neurons = final_layer_neurons
         self.kwargs = kwargs
-        self.data = self.get_data()
+        self.data = data
         self.X_train = X_train
         self.X_test = X_test
         self. y_train = y_train
@@ -48,6 +51,7 @@ class AttrModel:
         self.activation = 'sigmoid' if self.attribute == 'length' else 'softmax'
         self.loss = 'categorical_crossentropy' if self.attribute == 'length' else 'binary_crossentropy'
 
+
     def instantiate_model(self):
         input_tensor = Input(shape=self.input_shape) # input_shape is a tuple passed to the class
         if self.model == 'inception':              # calling the chosen pretrained model
@@ -66,8 +70,7 @@ class AttrModel:
             print('''No model found. Please pass one of the following:
                   inception, resnet, mobilenet, efficientnet''')
 
-        for layer in base_model.layers:
-            layer.trainable = False       # freeze layers
+        base_model.trainable = False    # freeze layers
 
         model = Flatten()(base_model.output)
         model = Dense(self.final_layer_neurons, activation=self.activation)(model)
@@ -75,3 +78,30 @@ class AttrModel:
 
         model.compile(loss=self.loss, optimizer='adam',
                       metrics=['accuracy', Precision(), Recall()])
+
+        return model
+
+    def train(self, epochs=20, batch_size=32):
+        self.model.history = self.model.fit(
+            self.X_train, self.y_train,
+            epochs=epochs, batch_size=batch_size,
+            val_split=0.2, verbose=1)
+        return self.model.history.history
+
+    def finetune(self, epochs=20, callbacks=[EarlyStopping(patience=3)],
+                 batch_size=32, loss='categorical_crossentropy',
+                 metrics=['accuracy', Precision(), Recall()],
+                 new_data=None):
+        self.model.base_model.trainable = True     # unfreeze layers, then compile to save changes
+        self.model.compile(
+            optimizer=Adam(1e-5),  # Very low learning rate
+            loss=loss,
+            metrics=metrics)
+        self.model.fit(new_data, epochs=epochs, callbacks=..., validation_data=...)
+
+
+    def evaluate(self):
+        return self.model.evaluate(self.X_test, self.y_test, verbose=1)
+
+    def predict(self, X):
+        return self.model.predict(X)
