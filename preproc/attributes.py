@@ -6,7 +6,6 @@ from PIL import Image, ImageOps
 from keras.preprocessing.image import ImageDataGenerator
 import os
 from sklearn.model_selection import train_test_split
-import gc
 
 
 class AttributePreproc():
@@ -31,7 +30,6 @@ class AttributePreproc():
         self._df_preproc_train, self._df_preproc_test = self._train_test_split()
 
         del self._df_preproc
-        gc.collect()
 
         self._mean = round(self._df_preproc_train.iloc[:,1:self._index_range_attr[-1]-self._index_range_attr[0]+2].apply(pd.value_counts).iloc[1,:].mean()) # mean number of images in each attribute class in training data set
 
@@ -97,6 +95,8 @@ class AttributePreproc():
         # dataframe for preprocessing:
         df_preproc = self._df.iloc[:,np.r_[0,start_index_attr:end_index_attr,start_index_bb:start_index_bb+4]] # select all attributes related to 'attr_group' and the image bounding boxes
 
+        del self._df
+
         return df_preproc
 
     def _preproc_arrays(self): # create preprocessed arrays
@@ -131,10 +131,10 @@ class AttributePreproc():
                     sample_df = pd.concat([sample_df,temp_oversample_df],axis=0) # store array of original and augmented images
                 del augmented_img_array
                 del temp_oversample_df
-                gc.collect()
+
             df_preproc_array_df = pd.concat([df_preproc_array_df,sample_df],axis=0)
             del sample_df
-            gc.collect()
+
         return df_preproc_array_df.iloc[:,1:], df_preproc_array_df.iloc[:,0]
 
 
