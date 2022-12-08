@@ -19,11 +19,11 @@ pip install -e .
 ```
 4. Import the package from within Python:
 ```
-from preproc.attributes import Preproc
+from preproc.attributes import AttributePreproc
 ```
 5. Initialise with desired parameters:
 ```
-prep = Preproc(path_to_img_folder, resized_shape_tuple, attribute_group, test_size) # e.g. Preproc(folder/img, (256,256), 'fabric', 0.2)
+prep = AttributePreproc(path_to_img_folder, resized_shape_tuple, attribute_group, test_size) # e.g. AttributePreproc(folder/img, (256,256), 'fabric', 0.2)
 ```
 6. Run the preprocessor:
 ```
