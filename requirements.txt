@@ -1,6 +1,6 @@
 pandas==1.4.4
 numpy==1.23.5
-Pillow==9.0.0
+Pillow==9.3.0
 keras==2.10.0; sys_platform == "darwin"
 keras==2.11.0; sys_platform == "windows" or sys_platform == "linux"
 sklearn-pandas==1.8.0
@@ -31,7 +31,6 @@ oauthlib==3.2.2
 opt-einsum==3.3.0
 packaging==21.3
 pandas==1.4.4
-Pillow==9.0.0
 preproc==0.0.0
 protobuf==3.19.6
 pyasn1==0.4.8
