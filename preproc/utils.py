@@ -1,4 +1,6 @@
 import numpy as np
+from keras.preprocessing.image import ImageDataGenerator
+
 
 class _format(): # resize and pad image with appropriate background color
     def __init__(self, image, resize_dim) -> None:
@@ -53,3 +55,26 @@ class _format(): # resize and pad image with appropriate background color
         edge_color = int(np.concatenate((left, right)).mean())
         mean_color = (edge_color,edge_color)
         return mean_color
+
+
+class _augment():
+    def __init__(self, img_array, samples, pad_color) -> None:
+        self._img_array = img_array
+        self._samples = samples
+        self._pad_color = pad_color
+
+    def run(self):
+        self._img_array = self._img_array.reshape((1,) + self._img_array.shape) # resize image to correct shape
+
+        # Create an ImageDataGenerator object with the desired transformations
+        datagen = ImageDataGenerator(
+            horizontal_flip=True,
+            width_shift_range=0.2,
+            rotation_range=15,
+            fill_mode='constant', # fill new space created when rotating images with white
+            cval=self._pad_color
+        )
+
+        aug_iter = datagen.flow(self._img_array, batch_size=1) # apply ImageDataGenerator object to sample image array
+        arrays = [aug_iter.next()[0].astype('uint8') for i in range (self._samples)] # create required number of augmented images
+        return arrays

@@ -1,12 +1,10 @@
 import pandas as pd
 import numpy as np
 import matplotlib.image as mpimg
-from keras.preprocessing.image import ImageDataGenerator
 import os
 from sklearn.model_selection import train_test_split
 import warnings
-from .utils import _format
-
+from .utils import _format, _augment
 
 warnings.filterwarnings('ignore')
 pd.set_option('display.max_columns', None)
@@ -93,7 +91,8 @@ class SectionPreproc():
                     temp_oversample_df = pd.concat([pd.DataFrame([row], columns = self._df_preproc_train.columns).iloc[:,:-4]]*(sample+1),ignore_index=True) # dataframe to store oversampled images
                     augmented_img_array = []
                     if sample != 0: # if at least one augmentation must be made
-                        augmented_img_array = self._augment(cropped_img_array,sample) # augment image 'sample' times and convert each augmentation to numpy array
+                        augmented_img_array = _augment(cropped_img_array,sample, self._pad_color).run() # augment image 'sample' times and convert each augmentation to numpy array
+                        print(augmented_img_array)
                     augmented_img_array.append(cropped_img_array)
                     temp_oversample_df.iloc[:,0] = augmented_img_array # store arrays of augmented images in dataframe
                     sample_df = pd.concat([sample_df,temp_oversample_df],axis=0) # store array of original and augmented images
@@ -109,7 +108,7 @@ class SectionPreproc():
         full_path = os.path.join(self._path_img,img_name) # path to image on user's machine
         img = mpimg.imread(full_path) # load images
         img_array = np.asarray(img)
-        pad_array = _format(img_array, self._resize_dim).run()
+        pad_array, self._pad_color = _format(img_array, self._resize_dim).run()
 
         return pad_array
 
@@ -117,28 +116,14 @@ class SectionPreproc():
         full_path = os.path.join(self._path_img,img_name) # path to image on user's machine
         img = mpimg.imread(full_path) # load images
         if section == 'upper':
-            cropped = img[-50+y[0]:y[2], -100+min(x[0],x[1]):max(x[0],x[1])+100]
+            cropped = img[-50+min(y[0],y[2]):max(y[0],y[2]), -100+min(x[0],x[1]):max(x[0],x[1])+100]
         if section == 'lower':
-            cropped = img[-50+y[2]:y[4], -100+min(x[2],x[3]):max(x[2],x[3])+100]
+            cropped = img[-50+min(y[2],y[4]):max(y[2],y[4]), -100+min(x[2],x[3]):max(x[2],x[3])+100]
+        if cropped.size == 0:
+            cropped = img
         cropped_array = np.asarray(cropped)
-        cropped_pad_array = _format(cropped_array, self._resize_dim).run() # pad image with white background
+        cropped_pad_array, self._pad_color = _format(cropped_array, self._resize_dim).run() # pad image with white background
         return cropped_pad_array
-
-    def _augment(self, img_array, samples):
-        img_array = img_array.reshape((1,) + img_array.shape) # resize image to correct shape
-
-        # Create an ImageDataGenerator object with the desired transformations
-        datagen = ImageDataGenerator(
-            horizontal_flip=True,
-            width_shift_range=0.2,
-            rotation_range=15,
-            fill_mode='constant', # fill new space created when rotating images with white
-            cval=255
-        )
-
-        aug_iter = datagen.flow(img_array, batch_size=1) # apply ImageDataGenerator object to sample image array
-        arrays = [aug_iter.next()[0].astype('uint8') for i in range (samples)] # create required number of augmented images
-        return arrays
 
     def _train_test_split(self):
         self._df_preproc_train, self._df_preproc_test = train_test_split(self._df, test_size = self._test_size,random_state=2)

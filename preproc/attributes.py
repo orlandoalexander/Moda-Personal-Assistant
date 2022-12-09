@@ -3,10 +3,9 @@
 import pandas as pd
 import numpy as np
 import matplotlib.image as mpimg
-from keras.preprocessing.image import ImageDataGenerator
 import os
 from sklearn.model_selection import train_test_split
-from .utils import _format
+from .utils import _format, _augment
 
 class AttributePreproc():
     """
@@ -38,10 +37,10 @@ class AttributePreproc():
     def run(self):
         self._X_train, self._y_train = self._preproc_arrays()
         self._df_preproc_test['img'] = self._df_preproc_test.apply(lambda row: self._format_image(row[0], *row[-4:]),axis=1)
-        self._X_test, self._y_test = self._df_preproc_test.iloc[:,1:-4], self._df_preproc_test.iloc[:,0]
-        self._y_train, self._y_test = np.array(list(self._y_train)), np.array(list(self._y_test))
+        self._X_test, self._y_test = self._df_preproc_test.iloc[:,0], self._df_preproc_test.iloc[:,1:-4]
+        self._X_train, self._X_test = np.array(list(self._X_train)), np.array(list(self._X_test))
         print('Done!')
-        return self._X_train, self._y_train, self._X_test, self._y_test
+        return self._X_train, self._X_test, self._y_train, self._y_test
 
     def _get_df(self): # get formatted data frame
         # Categories:
@@ -125,7 +124,7 @@ class AttributePreproc():
                     temp_oversample_df = pd.concat([pd.DataFrame([row], columns = self._df_preproc_train.columns).iloc[:,:-4]]*(sample+1),ignore_index=True) # dataframe to store oversampled images
                     augmented_img_array = []
                     if sample != 0: # if at least one augmentation must be made
-                        augmented_img_array = self._augment(cropped_img_array,sample) # augment image 'sample' times and convert each augmentation to numpy array
+                        augmented_img_array = _augment(cropped_img_array,sample, self._pad_color).run() # augment image 'sample' times and convert each augmentation to numpy array
                     augmented_img_array.append(cropped_img_array)
                     temp_oversample_df.iloc[:,0] = augmented_img_array # store arrays of augmented images in dataframe
                     sample_df = pd.concat([sample_df,temp_oversample_df],axis=0) # store array of original and augmented images
@@ -135,8 +134,7 @@ class AttributePreproc():
             df_preproc_array_df = pd.concat([df_preproc_array_df,sample_df],axis=0)
             del sample_df
 
-        return df_preproc_array_df.iloc[:,1:], df_preproc_array_df.iloc[:,0]
-
+        return  df_preproc_array_df.iloc[:,0], df_preproc_array_df.iloc[:,1:]
 
     def _format_image(self, img_name, x1, y1, x2, y2): # crop image by bounding box and resize according to 'resize_dim'
         full_path = os.path.join(self._path_img,img_name) # path to image on user's machine
@@ -147,21 +145,6 @@ class AttributePreproc():
 
         return cropped_pad_array
 
-    def _augment(self, img_array, samples):
-        img_array = img_array.reshape((1,) + img_array.shape) # resize image to correct shape
-
-        # Create an ImageDataGenerator object with the desired transformations
-        datagen = ImageDataGenerator(
-            horizontal_flip=True,
-            width_shift_range=0.2,
-            rotation_range=15,
-            fill_mode='constant', # fill new space created when rotating images with white
-            cval=self._pad_color
-        )
-
-        aug_iter = datagen.flow(img_array, batch_size=1) # apply ImageDataGenerator object to sample image array
-        arrays = [aug_iter.next()[0].astype('uint8') for i in range (samples)] # create required number of augmented images
-        return arrays
 
     def _train_test_split(self):
         self._df_preproc_train, self._df_preproc_test = train_test_split(self._df_preproc, test_size = self._test_size,random_state=2)
