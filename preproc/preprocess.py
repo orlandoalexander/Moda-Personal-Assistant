@@ -43,7 +43,7 @@ class AttributePreproc():
     def run(self):
         self._X_train, self._y_train = self._preproc_arrays()
         self._df_preproc_test['img'] = self._df_preproc_test.apply(lambda row: self._format_image(row[0], *row[-4:]),axis=1)
-        self._X_test, self._y_test = self._df_preproc_test.iloc[:,0], self._df_preproc_test.iloc[:,1:-4]
+        self._X_test, self._y_test = self._df_preproc_test.iloc[:,0], np.asarray(self._df_preproc_test.iloc[:,1:-4])
         self._X_train, self._X_test = np.array(list(self._X_train)), np.array(list(self._X_test))
         print('Done!')
         return self._X_train, self._X_test, self._y_train, self._y_test
@@ -140,7 +140,7 @@ class AttributePreproc():
             df_preproc_array_df = pd.concat([df_preproc_array_df,sample_df],axis=0)
             del sample_df
 
-        return  df_preproc_array_df.iloc[:,0], df_preproc_array_df.iloc[:,1:]
+        return  df_preproc_array_df.iloc[:,0], np.asarray(df_preproc_array_df.iloc[:,1:])
 
     def _format_image(self, img_name, x1, y1, x2, y2): # crop image by bounding box and resize according to 'resize_dim'
         full_path = os.path.join(self._path_img,img_name) # path to image on user's machine
@@ -154,7 +154,6 @@ class AttributePreproc():
     def _train_test_split(self):
         self._df_preproc_train, self._df_preproc_test = train_test_split(self._df_preproc, test_size = self._test_size,random_state=2)
         return self._df_preproc_train, self._df_preproc_test
-
 
 
 
@@ -175,7 +174,7 @@ class SectionPreproc():
     def run(self):
         self._X_train, self._y_train = self._preproc_arrays()
         self._df_preproc_test['img'] = self._df_preproc_test.apply(lambda row: self._format_image(row[0]),axis=1)
-        self._X_test, self._y_test = self._df_preproc_test.iloc[:,0], self._df_preproc_test.iloc[:,1:6]
+        self._X_test, self._y_test = self._df_preproc_test.iloc[:,0], np.asarray(self._df_preproc_test.iloc[:,1:6])
         self._X_train, self._X_test = np.array(list(self._X_train)), np.array(list(self._X_test))
         print('Done!')
         return self._X_train, self._X_test, self._y_train, self._y_test
@@ -250,7 +249,7 @@ class SectionPreproc():
             df_preproc_array_df = pd.concat([df_preproc_array_df,sample_df],axis=0)
             del sample_df
 
-        return df_preproc_array_df.iloc[:,0], df_preproc_array_df.iloc[:,1:6]
+        return df_preproc_array_df.iloc[:,0], np.asarray(df_preproc_array_df.iloc[:,1:6])
 
     def _format_image(self, img_name):
         full_path = os.path.join(self._path_img,img_name) # path to image on user's machine
@@ -300,9 +299,7 @@ class CategoryPreproc():
         self._df_preproc_test['img'] = self._df_preproc_test.apply(lambda row: self._format_image(row[0]),axis=1)
         ohe = OneHotEncoder(sparse=False)
         y_test = np.expand_dims(self._df_preproc_test.iloc[:,-1],axis=1)
-        y_test_enc = ohe.fit_transform(y_test)
-        columns = [column.strip('x0-_') for column in ohe.get_feature_names_out()]
-        self._y_test = pd.DataFrame(y_test_enc,columns=columns)
+        self._y_test = ohe.fit_transform(y_test)
 
         self._X_test = self._df_preproc_test.iloc[:,0]
         self._X_train, self._X_test = np.array(list(self._X_train)), np.array(list(self._X_test))
@@ -405,11 +402,9 @@ class CategoryPreproc():
 
         ohe = OneHotEncoder(sparse=False)
         y_train = np.expand_dims(self._df_preproc_train.iloc[:,-1],axis=1)
-        y_train_enc = ohe.fit_transform(y_train)
-        columns = [column.strip('x0-_') for column in ohe.get_feature_names_out()]
+        y_train = ohe.fit_transform(y_train)
 
-        y_train_df = pd.DataFrame(y_train_enc,columns=columns)
-        return df_preproc_array_df.iloc[:,0], y_train_df
+        return df_preproc_array_df.iloc[:,0], y_train
 
     def _format_image(self, img_name):
         full_path = os.path.join(self._path_img,img_name) # path to image on user's machine
