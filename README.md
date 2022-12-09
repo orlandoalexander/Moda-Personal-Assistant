@@ -14,7 +14,7 @@ pip install git+https://github.com/orlandoalexander/Moda-Personal-Assistant.git@
 ```
 3. Import the package from within Python:
 ```
-from preproc.attributes import AttributePreproc
+from preproc.preprocess import AttributePreproc, SectionPreproc, CategoryPreproc
 ```
 4. Initialise with desired parameters:
 ```
