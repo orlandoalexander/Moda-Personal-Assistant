@@ -1,10 +1,12 @@
 import pandas as pd
 import numpy as np
-from PIL import Image, ImageOps
+import matplotlib.image as mpimg
 from keras.preprocessing.image import ImageDataGenerator
 import os
 from sklearn.model_selection import train_test_split
 import warnings
+from .utils import _format
+
 
 warnings.filterwarnings('ignore')
 pd.set_option('display.max_columns', None)
@@ -29,7 +31,7 @@ class SectionPreproc():
         self._X_test, self._y_test = self._df_preproc_test.iloc[:,1:6], self._df_preproc_test.iloc[:,0]
         self._y_train, self._y_test = np.array(list(self._y_train)), np.array(list(self._y_test))
         print('Done!')
-        return self._X_train, self._X_test, self._y_train, self._y_test
+        return self._X_train, self._y_train, self._X_test, self._y_test
 
     def _get_df(self): # get formatted data frame
         # Sections:
@@ -105,20 +107,21 @@ class SectionPreproc():
 
     def _format_image(self, img_name):
         full_path = os.path.join(self._path_img,img_name) # path to image on user's machine
-        img = Image.open(full_path) # load images
-        cropped_pad = ImageOps.pad(img,self._resize_dim,color=(255,255,255)) # pad image with white background
-        cropped_pad_array = np.asarray(cropped_pad)
-        return cropped_pad_array
+        img = mpimg.imread(full_path) # load images
+        img_array = np.asarray(img)
+        pad_array = _format(img_array, self._resize_dim).run()
+
+        return pad_array
 
     def _format_image_outfit(self, section, img_name, x, y):
         full_path = os.path.join(self._path_img,img_name) # path to image on user's machine
-        img = Image.open(full_path) # load images
+        img = mpimg.imread(full_path) # load images
         if section == 'upper':
-            cropped = img.crop((-100+min(x[0],x[1]),-50+y[0],max(x[0],x[1])+100,y[2]))
+            cropped = img[-50+y[0]:y[2], -100+min(x[0],x[1]):max(x[0],x[1])+100]
         if section == 'lower':
-            cropped = img.crop((-100+min(x[2],x[3]),-50+y[2],max(x[2],x[3])+100,y[4]))
-        cropped_pad = ImageOps.pad(cropped,self._resize_dim,color=(255,255,255)) # pad image with white background
-        cropped_pad_array = np.asarray(cropped_pad)
+            cropped = img[-50+y[2]:y[4], -100+min(x[2],x[3]):max(x[2],x[3])+100]
+        cropped_array = np.asarray(cropped)
+        cropped_pad_array = _format(cropped_array, self._resize_dim).run() # pad image with white background
         return cropped_pad_array
 
     def _augment(self, img_array, samples):

@@ -1,12 +1,12 @@
-# TODO: implement preprocessing for category and section models
+# TODO: implement preprocessing for category and section models
 
 import pandas as pd
 import numpy as np
-from PIL import Image, ImageOps
+import matplotlib.image as mpimg
 from keras.preprocessing.image import ImageDataGenerator
 import os
 from sklearn.model_selection import train_test_split
-
+from .utils import _format
 
 class AttributePreproc():
     """
@@ -41,7 +41,7 @@ class AttributePreproc():
         self._X_test, self._y_test = self._df_preproc_test.iloc[:,1:-4], self._df_preproc_test.iloc[:,0]
         self._y_train, self._y_test = np.array(list(self._y_train)), np.array(list(self._y_test))
         print('Done!')
-        return self._X_train, self._X_test, self._y_train, self._y_test
+        return self._X_train, self._y_train, self._X_test, self._y_test
 
     def _get_df(self): # get formatted data frame
         # Categories:
@@ -140,10 +140,10 @@ class AttributePreproc():
 
     def _format_image(self, img_name, x1, y1, x2, y2): # crop image by bounding box and resize according to 'resize_dim'
         full_path = os.path.join(self._path_img,img_name) # path to image on user's machine
-        img = Image.open(full_path) # load images
-        cropped = img.crop((x1, y1, x2, y2)) # crop images
-        cropped_pad = ImageOps.pad(cropped,self._resize_dim,color=(255,255,255)) # pad image with white background
-        cropped_pad_array = np.asarray(cropped_pad)
+        img = mpimg.imread(full_path) # load images
+        cropped = img[y1:y2,x1:x2] # crop images
+
+        cropped_pad_array, self._pad_color = _format(cropped, self._resize_dim).run()
 
         return cropped_pad_array
 
@@ -156,7 +156,7 @@ class AttributePreproc():
             width_shift_range=0.2,
             rotation_range=15,
             fill_mode='constant', # fill new space created when rotating images with white
-            cval=255
+            cval=self._pad_color
         )
 
         aug_iter = datagen.flow(img_array, batch_size=1) # apply ImageDataGenerator object to sample image array
