@@ -51,8 +51,6 @@ class _format(): # resize and pad image with appropriate background color
                 ax1_pad_right = ax1_pad_left + 1
 
 
-
-
         pad_color = self._get_pad_color()
 
         cropped_pad_array = np.pad(cropped_array,pad_width=((ax0_pad_left, ax0_pad_right),(ax1_pad_left, ax1_pad_right),(0, 0)),constant_values=pad_color) # pad image with white background

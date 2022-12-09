@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.image as mpimg
 import os
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OneHotEncoder
 import warnings
 from .utils import _format, _augment
 
@@ -219,7 +220,7 @@ class SectionPreproc():
                 else:
                     sample_df['img'] = sample_df.apply(lambda row: self._format_image(row[0]),axis=1) # pad and convert each image to numpy array
                 sample_df = sample_df.iloc[:,:-6] # only store formatted numpy arrays and section columns
-            else: # if number of section samples is less than mean number of samples for the section group --> oversample
+            else: # if number of section samples is less than mean number of samples for the section --> oversample
                 print(f"Augmenting section '{section}'...")
                 # create list storing number of samples to make for each image:
                 sample_values = [0]*int(count) # list storing number of samples for each image
@@ -240,7 +241,6 @@ class SectionPreproc():
                     augmented_img_array = []
                     if sample != 0: # if at least one augmentation must be made
                         augmented_img_array = _augment(cropped_img_array,sample, self._pad_color).run() # augment image 'sample' times and convert each augmentation to numpy array
-                        print(augmented_img_array)
                     augmented_img_array.append(cropped_img_array)
                     temp_oversample_df.iloc[:,0] = augmented_img_array # store arrays of augmented images in dataframe
                     sample_df = pd.concat([sample_df,temp_oversample_df],axis=0) # store array of original and augmented images
@@ -270,7 +270,7 @@ class SectionPreproc():
         if cropped.size == 0:
             cropped = img
         cropped_array = np.asarray(cropped)
-        cropped_pad_array, self._pad_color = _format(cropped_array, self._resize_dim).run() # pad image with white background
+        cropped_pad_array, self._pad_color = _format(cropped_array, self._resize_dim).run() # pad image with appropriate background
         return cropped_pad_array
 
     def _train_test_split(self):
@@ -290,8 +290,6 @@ class CategoryPreproc():
         self._test_size = test_size
         self._path_data = os.path.join(location, 'preproc_data')
         self._df = self._get_df()
-        self._df.drop(columns=['x1', 'y1', 'x2', 'y2', 'x3', 'y3', 'x4', 'y4', 'x5', 'y5', 'x6', 'y6'],inplace=True) # remove landmark columns
-
         self._df_preproc_train, self._df_preproc_test = self._train_test_split()
 
         self._mean = round(self._df_preproc_train.category.value_counts().mean()) # mean number of images in each category class in training data set
@@ -300,7 +298,13 @@ class CategoryPreproc():
     def run(self):
         self._X_train, self._y_train = self._preproc_arrays()
         self._df_preproc_test['img'] = self._df_preproc_test.apply(lambda row: self._format_image(row[0]),axis=1)
-        self._X_test, self._y_test = self._df_preproc_test.iloc[:,0], self._df_preproc_test.iloc[:,1:6]
+        ohe = OneHotEncoder(sparse=False)
+        y_test = np.expand_dims(self._df_preproc_test.iloc[:,-1],axis=1)
+        y_test_enc = ohe.fit_transform(y_test)
+        columns = [column.strip('x0-_') for column in ohe.get_feature_names_out()]
+        self._y_test = pd.DataFrame(y_test_enc,columns=columns)
+
+        self._X_test = self._df_preproc_test.iloc[:,0]
         self._X_train, self._X_test = np.array(list(self._X_train)), np.array(list(self._X_test))
         print('Done!')
         return self._X_train, self._X_test, self._y_train, self._y_test
@@ -346,7 +350,6 @@ class CategoryPreproc():
                 img_cats[index,:]=np.array([path,img_cat])
 
         img_cats_df = pd.DataFrame(img_cats,columns=['img','category'])
-
         # Create full data set:
         data_full = section.merge(landmarks, on='img',how='left').merge(img_cats_df, on='img', how='left').dropna()
         data_full.drop(columns='lower_fabric',inplace=True)
@@ -362,16 +365,16 @@ class CategoryPreproc():
         for category, count in self._section_counts:
             if count >= self._mean: # if number of category samples is greater than mean number of samples for the category --> undersample
                 print(f"Augmenting category '{category}'...")
-                sample_df = self._df_preproc_train[self._df_preproc_train.category==category].sample(self._mean,random_state=2) # sample of images corresponding to mean number of samples for the category
+                sample_df = self._df_preproc_train[self._df_preproc_train['category']==category].sample(self._mean,random_state=2) # sample of images corresponding to mean number of samples for the category
                 if category in ['Tees', 'Blouses','Sweaters','Jackets','Cardigans','Graphic_Tees','Shirts']: # if category is of 'upper' type
-                    sample_df['img'] = sample_df.apply(lambda row: self._format_image_outfit(section, row[0], row[6::2].astype(int), row[7::2].astype(int)),axis=1) # split each sampled image into upper/lower, pad and convert to numpy array
+                    sample_df['img'] = sample_df.apply(lambda row: self._format_image_crop('upper', row[0], row[1:-1:2].astype(int), row[2:-1:2].astype(int)),axis=1) # crop upper half of image, pad and convert to numpy array
                 elif category in ['Shorts', 'Pants', 'Skirts', 'Joggers', 'Baggy_Pants']:
-                    sample_df['img'] = sample_df.apply(lambda row: self._format_image(row[0]),axis=1) # pad and convert each image to numpy array
+                    sample_df['img'] = sample_df.apply(lambda row: self._format_image_crop('lower', row[0], row[1:-1:2].astype(int), row[2:-1:2].astype(int)),axis=1) # crop lower half of image, pad and convert to numpy array
                 else:
-                    # don't crop
-                sample_df = sample_df.iloc[:,:-6] # only store formatted numpy arrays and section columns
-            else: # if number of section samples is less than mean number of samples for the section group --> oversample
-                print(f"Augmenting section '{section}'...")
+                    sample_df['img'] = sample_df.apply(lambda row: self._format_image(row[0]),axis=1)
+                sample_df = sample_df.iloc[:,np.r_[0,-1]] # only store formatted numpy arrays and category columns
+            else: # if number of section samples is less than mean number of samples for the category --> oversample
+                print(f"Augmenting category '{category}'...")
                 # create list storing number of samples to make for each image:
                 sample_values = [0]*int(count) # list storing number of samples for each image
                 remaining_sum = self._mean-count # subtract 'count' as original image also converted to numpy array and stored
@@ -381,17 +384,16 @@ class CategoryPreproc():
                     remaining_sum-=1
                     i = (i+1)%len(sample_values)
                 sample_df = pd.DataFrame() # empty dataframe to store augmented images
-                for index, row in enumerate(self._df_preproc_train[self._df_preproc_train[section]==1].values): # iterate over each image beloning to current section
+                for index, row in enumerate(self._df_preproc_train[self._df_preproc_train.category==category].values): # iterate over each image beloning to current category
                     sample = sample_values[index] # number of samples to be made for current image
-                    if section in ['lower', 'upper']:
-                        cropped_img_array = self._format_image_outfit(section, row[0], row[6::2].astype(int), row[7::2].astype(int))
-                    else:
+                    if category in ['Tees', 'Blouses','Sweaters','Jackets','Cardigans','Graphic_Tees','Shirts']:
+                        cropped_img_array = self._format_image_crop('upper', row[0], row[1:-1:2].astype(int), row[2:-1:2].astype(int))
+                    elif category in ['Shorts', 'Pants', 'Skirts', 'Joggers', 'Baggy_Pants']:
                         cropped_img_array = self._format_image(row[0])
-                    temp_oversample_df = pd.concat([pd.DataFrame([row], columns = self._df_preproc_train.columns).iloc[:,:-4]]*(sample+1),ignore_index=True) # dataframe to store oversampled images
+                    temp_oversample_df = pd.concat([pd.DataFrame([row], columns = self._df_preproc_train.columns).iloc[:,np.r_[0,-1]]]*(sample+1),ignore_index=True) # dataframe to store oversampled images
                     augmented_img_array = []
                     if sample != 0: # if at least one augmentation must be made
                         augmented_img_array = _augment(cropped_img_array,sample, self._pad_color).run() # augment image 'sample' times and convert each augmentation to numpy array
-                        print(augmented_img_array)
                     augmented_img_array.append(cropped_img_array)
                     temp_oversample_df.iloc[:,0] = augmented_img_array # store arrays of augmented images in dataframe
                     sample_df = pd.concat([sample_df,temp_oversample_df],axis=0) # store array of original and augmented images
@@ -401,7 +403,13 @@ class CategoryPreproc():
             df_preproc_array_df = pd.concat([df_preproc_array_df,sample_df],axis=0)
             del sample_df
 
-        return df_preproc_array_df.iloc[:,0], df_preproc_array_df.iloc[:,1:6]
+        ohe = OneHotEncoder(sparse=False)
+        y_train = np.expand_dims(self._df_preproc_train.iloc[:,-1],axis=1)
+        y_train_enc = ohe.fit_transform(y_train)
+        columns = [column.strip('x0-_') for column in ohe.get_feature_names_out()]
+
+        y_train_df = pd.DataFrame(y_train_enc,columns=columns)
+        return df_preproc_array_df.iloc[:,0], y_train_df
 
     def _format_image(self, img_name):
         full_path = os.path.join(self._path_img,img_name) # path to image on user's machine
@@ -411,7 +419,7 @@ class CategoryPreproc():
 
         return pad_array
 
-    def _format_image_outfit(self, section, img_name, x, y):
+    def _format_image_crop(self, section, img_name, x, y):
         full_path = os.path.join(self._path_img,img_name) # path to image on user's machine
         img = mpimg.imread(full_path) # load images
         if section == 'upper':
@@ -421,12 +429,10 @@ class CategoryPreproc():
         if cropped.size == 0:
             cropped = img
         cropped_array = np.asarray(cropped)
-        cropped_pad_array, self._pad_color = _format(cropped_array, self._resize_dim).run() # pad image with white background
+        cropped_pad_array, self._pad_color = _format(cropped_array, self._resize_dim).run() # pad image with appropriate background
         return cropped_pad_array
 
     def _train_test_split(self):
         self._df_preproc_train, self._df_preproc_test = train_test_split(self._df, test_size = self._test_size,random_state=2)
-
-        del self._df
 
         return self._df_preproc_train, self._df_preproc_test
