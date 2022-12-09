@@ -8,10 +8,11 @@ class _format(): # resize and pad image with appropriate background color
         self._resize_dim = resize_dim
 
     def run(self):
+        # Central crop for images which are greater than specified resize dimensions
         if self._image.shape[1]>self._resize_dim[0]:
-                x = self._image.shape[1]
-                start_x = x//2-(self._resize_dim[0]//2)
-                self._image = self._image[:,start_x:start_x+self._resize_dim[0]]
+            x = self._image.shape[1]
+            start_x = x//2-(self._resize_dim[0]//2)
+            self._image = self._image[:,start_x:start_x+self._resize_dim[0]]
 
         if self._image.shape[0]>self._resize_dim[1]:
             y = self._image.shape[0]
@@ -20,26 +21,37 @@ class _format(): # resize and pad image with appropriate background color
 
         cropped_array = np.asarray(self._image)
 
+        # 'Zoom' image so either x or y dimensions fits corresponding resize dimensions (or as near as possible)
         if cropped_array.shape[0] > cropped_array.shape[1]:
-            scale = self._resize_dim[1]/cropped_array.shape[0]
+            scale = (self._resize_dim[1]-1)/cropped_array.shape[0]
         else:
-            scale = self._resize_dim[0]/cropped_array.shape[1]
-
+            scale = (self._resize_dim[0]-1)/cropped_array.shape[1]
         scale_x, scale_y = (scale * dim for dim in cropped_array.shape[:-1])
         x, y = np.ogrid[0:scale_x, 0:scale_y]
+
         cropped_array = cropped_array[(x//scale).astype(int), (y//scale).astype(int)]
 
+        # Pad missing pixels to resize image to require dimensions
         if cropped_array.shape[0] % 2 == 0:
             ax0_pad_left = ax0_pad_right = int((self._resize_dim[1] - cropped_array.shape[0])/2)
         else:
-            ax0_pad_left = int((self._resize_dim[1] - cropped_array.shape[0])/2)
-            ax0_pad_right = ax0_pad_left + 1
+            dif = (self._resize_dim[1] - cropped_array.shape[0])
+            ax0_pad_left = int(dif/2)
+            ax0_pad_right=0
+            if dif > 0:
+                ax0_pad_right = ax0_pad_left + 1
 
         if cropped_array.shape[1] % 2 == 0:
             ax1_pad_left = ax1_pad_right = int((self._resize_dim[0] - cropped_array.shape[1])/2)
         else:
-            ax1_pad_left = int((self._resize_dim[0] - cropped_array.shape[1])/2)
-            ax1_pad_right = ax1_pad_left + 1
+            dif = (self._resize_dim[0] - cropped_array.shape[1])
+            ax1_pad_left = int(dif/2)
+            ax1_pad_right=0
+            if dif > 0:
+                ax1_pad_right = ax1_pad_left + 1
+
+
+
 
         pad_color = self._get_pad_color()
 
