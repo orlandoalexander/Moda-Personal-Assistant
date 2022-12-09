@@ -26,10 +26,10 @@ class SectionPreproc():
     def run(self):
         self._X_train, self._y_train = self._preproc_arrays()
         self._df_preproc_test['img'] = self._df_preproc_test.apply(lambda row: self._format_image(row[0]),axis=1)
-        self._X_test, self._y_test = self._df_preproc_test.iloc[:,1:6], self._df_preproc_test.iloc[:,0]
-        self._y_train, self._y_test = np.array(list(self._y_train)), np.array(list(self._y_test))
+        self._X_test, self._y_test = self._df_preproc_test.iloc[:,0], self._df_preproc_test.iloc[:,1:6]
+        self._X_train, self._X_test = np.array(list(self._X_train)), np.array(list(self._X_test))
         print('Done!')
-        return self._X_train, self._y_train, self._X_test, self._y_test
+        return self._X_train, self._X_test, self._y_train, self._y_test
 
     def _get_df(self): # get formatted data frame
         # Sections:
@@ -102,7 +102,7 @@ class SectionPreproc():
             df_preproc_array_df = pd.concat([df_preproc_array_df,sample_df],axis=0)
             del sample_df
 
-        return df_preproc_array_df.iloc[:,1:6], df_preproc_array_df.iloc[:,0]
+        return df_preproc_array_df.iloc[:,0], df_preproc_array_df.iloc[:,1:6]
 
     def _format_image(self, img_name):
         full_path = os.path.join(self._path_img,img_name) # path to image on user's machine
