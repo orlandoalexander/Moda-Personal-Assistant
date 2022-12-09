@@ -24,3 +24,10 @@ prep = AttributePreproc(path_to_img_folder, resized_shape_tuple, attribute_group
 ```
 X_train, X_test, y_train, y_test = prep.run()
 ```
+
+## Release memory after running preprocessing
+```
+for i in dir(preproc_obj):
+    del i
+del preproc_obj
+```
