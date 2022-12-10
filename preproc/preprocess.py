@@ -40,13 +40,15 @@ class AttributePreproc():
 
         self._attr_counts = list(self._df_preproc_train.iloc[:,1:self._index_range_attr[-1]-self._index_range_attr[0]+2].apply(pd.value_counts).iloc[1,:].items()) # number of images in each attribute class (list of tuples) in training data set
 
+        self._attr_names = [attr[0] for attr in self._attr_counts]
+
     def run(self):
         self._X_train, self._y_train = self._preproc_arrays()
         self._df_preproc_test['img'] = self._df_preproc_test.apply(lambda row: self._format_image(row[0], *row[-4:]),axis=1)
         self._X_test, self._y_test = self._df_preproc_test.iloc[:,0], np.asarray(self._df_preproc_test.iloc[:,1:-4])
         self._X_train, self._X_test = np.array(list(self._X_train)), np.array(list(self._X_test))
         print('Done!')
-        return self._X_train, self._X_test, self._y_train, self._y_test
+        return self._X_train, self._X_test, self._y_train, self._y_test, self._attr_names
 
     def _get_df(self): # get formatted data frame
         # Categories:
@@ -170,6 +172,7 @@ class SectionPreproc():
 
         self._mean = round(self._df_preproc_train.iloc[:,1:6].apply(pd.value_counts).iloc[1,:].mean()) # mean number of images in each section class in training data set
         self._section_counts = list(self._df_preproc_train.iloc[:,1:6].apply(pd.value_counts).iloc[1,:].items()) # number of images in each section class (list of tuples) in training data set
+        self._section_names = [section[0] for section in self._section_counts]
 
     def run(self):
         self._X_train, self._y_train = self._preproc_arrays()
@@ -177,7 +180,7 @@ class SectionPreproc():
         self._X_test, self._y_test = self._df_preproc_test.iloc[:,0], np.asarray(self._df_preproc_test.iloc[:,1:6])
         self._X_train, self._X_test = np.array(list(self._X_train)), np.array(list(self._X_test))
         print('Done!')
-        return self._X_train, self._X_test, self._y_train, self._y_test
+        return self._X_train, self._X_test, self._y_train, self._y_test, self._section_names
 
     def _get_df(self): # get formatted data frame
         # Sections:
