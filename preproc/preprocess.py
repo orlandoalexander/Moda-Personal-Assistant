@@ -295,7 +295,7 @@ class CategoryPreproc():
         self._section_counts = list(self._df_preproc_train.category.value_counts().items()) # number of images in each category class (list of tuples) in training data set
 
     def run(self):
-        self._X_train, self._y_train = self._preproc_arrays()
+        self._X_train, self._y_train, cat_names = self._preproc_arrays()
         self._df_preproc_test['img'] = self._df_preproc_test.apply(lambda row: self._format_image(row[0]),axis=1)
         ohe = OneHotEncoder(sparse=False)
         y_test = np.expand_dims(self._df_preproc_test.iloc[:,-1],axis=1)
@@ -304,7 +304,7 @@ class CategoryPreproc():
         self._X_test = self._df_preproc_test.iloc[:,0]
         self._X_train, self._X_test = np.array(list(self._X_train)), np.array(list(self._X_test))
         print('Done!')
-        return self._X_train, self._X_test, self._y_train, self._y_test
+        return self._X_train, self._X_test, self._y_train, self._y_test, cat_names
 
     def _get_df(self): # get formatted data frame - only use images of entire model
         # Section:
@@ -386,6 +386,8 @@ class CategoryPreproc():
                     if category in ['Tees', 'Blouses','Sweaters','Jackets','Cardigans','Graphic_Tees','Shirts']:
                         cropped_img_array = self._format_image_crop('upper', row[0], row[1:-1:2].astype(int), row[2:-1:2].astype(int))
                     elif category in ['Shorts', 'Pants', 'Skirts', 'Joggers', 'Baggy_Pants']:
+                        cropped_img_array = self._format_image_crop('lower', row[0], row[1:-1:2].astype(int), row[2:-1:2].astype(int))
+                    else:
                         cropped_img_array = self._format_image(row[0])
                     temp_oversample_df = pd.concat([pd.DataFrame([row], columns = self._df_preproc_train.columns).iloc[:,np.r_[0,-1]]]*(sample+1),ignore_index=True) # dataframe to store oversampled images
                     augmented_img_array = []
@@ -394,6 +396,7 @@ class CategoryPreproc():
                     augmented_img_array.append(cropped_img_array)
                     temp_oversample_df.iloc[:,0] = augmented_img_array # store arrays of augmented images in dataframe
                     sample_df = pd.concat([sample_df,temp_oversample_df],axis=0) # store array of original and augmented images
+
                 del augmented_img_array
                 del temp_oversample_df
 
@@ -401,10 +404,11 @@ class CategoryPreproc():
             del sample_df
 
         ohe = OneHotEncoder(sparse=False)
-        y_train = np.expand_dims(self._df_preproc_train.iloc[:,-1],axis=1)
+        y_train = np.expand_dims(df_preproc_array_df.iloc[:,-1],axis=1)
         y_train = ohe.fit_transform(y_train)
+        category_names = [name.replace('x0_','') for name in ohe.get_feature_names_out()]
 
-        return df_preproc_array_df.iloc[:,0], y_train
+        return df_preproc_array_df.iloc[:,0], y_train, category_names
 
     def _format_image(self, img_name):
         full_path = os.path.join(self._path_img,img_name) # path to image on user's machine
@@ -418,12 +422,13 @@ class CategoryPreproc():
         full_path = os.path.join(self._path_img,img_name) # path to image on user's machine
         img = mpimg.imread(full_path) # load images
         if section == 'upper':
-            cropped = img[-50+min(y[0],y[2]):max(y[0],y[2]), -100+min(x[0],x[1]):max(x[0],x[1])+100]
+            cropped = img[-50+y[0]:y[2], -100+min(x[0],x[1]):max(x[0],x[1])+100]
         if section == 'lower':
-            cropped = img[-50+min(y[2],y[4]):max(y[2],y[4]), -100+min(x[2],x[3]):max(x[2],x[3])+100]
+            cropped = img[-50+y[2]:y[4], -100+min(x[2],x[3]):max(x[2],x[3])+100]
         if cropped.size == 0:
             cropped = img
         cropped_array = np.asarray(cropped)
+
         cropped_pad_array, self._pad_color = _format(cropped_array, self._resize_dim).run() # pad image with appropriate background
         return cropped_pad_array
 

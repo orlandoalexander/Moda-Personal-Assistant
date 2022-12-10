@@ -8,17 +8,6 @@ class _format(): # resize and pad image with appropriate background color
         self._resize_dim = resize_dim
 
     def run(self):
-        # Central crop for images which are greater than specified resize dimensions
-        if self._image.shape[1]>self._resize_dim[0]:
-            x = self._image.shape[1]
-            start_x = x//2-(self._resize_dim[0]//2)
-            self._image = self._image[:,start_x:start_x+self._resize_dim[0]]
-
-        if self._image.shape[0]>self._resize_dim[1]:
-            y = self._image.shape[0]
-            start_y = y//2-(self._resize_dim[1]//2)
-            self._image = self._image[start_y:start_y+self._resize_dim[1],:]
-
         cropped_array = np.asarray(self._image)
 
         # 'Zoom' image so either x or y dimensions fits corresponding resize dimensions (or as near as possible)
