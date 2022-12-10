@@ -169,7 +169,7 @@ class SectionPreproc():
         self._df = self._get_df()
 
         self._df_preproc_train, self._df_preproc_test = self._train_test_split()
-
+        print('hi')
         self._mean = round(self._df_preproc_train.iloc[:,1:6].apply(pd.value_counts).iloc[1,:].mean()) # mean number of images in each section class in training data set
         self._section_counts = list(self._df_preproc_train.iloc[:,1:6].apply(pd.value_counts).iloc[1,:].items()) # number of images in each section class (list of tuples) in training data set
         self._section_names = [section[0] for section in self._section_counts]
