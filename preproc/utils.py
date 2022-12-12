@@ -1,5 +1,6 @@
 import numpy as np
 from keras.preprocessing.image import ImageDataGenerator
+from PIL import Image
 
 
 class _format(): # resize and pad image with appropriate background color
@@ -19,6 +20,7 @@ class _format(): # resize and pad image with appropriate background color
         x, y = np.ogrid[0:scale_x, 0:scale_y]
 
         cropped_array = cropped_array[(x//scale).astype(int), (y//scale).astype(int)]
+
 
         # Pad missing pixels to resize image to require dimensions
         if cropped_array.shape[0] % 2 == 0:
@@ -43,6 +45,9 @@ class _format(): # resize and pad image with appropriate background color
         pad_color = self._get_pad_color()
 
         cropped_pad_array = np.pad(cropped_array,pad_width=((ax0_pad_left, ax0_pad_right),(ax1_pad_left, ax1_pad_right),(0, 0)),constant_values=pad_color) # pad image with white background
+
+        im = Image.fromarray(cropped_pad_array)
+        im.save('test.jpg')
 
         del cropped_array
 

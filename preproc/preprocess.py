@@ -9,6 +9,9 @@ from sklearn.preprocessing import OneHotEncoder
 import warnings
 from .utils import _format, _augment
 
+from PIL import Image
+
+
 warnings.filterwarnings('ignore')
 pd.set_option('display.max_columns', None)
 
@@ -165,10 +168,9 @@ class SectionPreproc():
         self._test_size = test_size
         self._path_data = os.path.join(location, 'preproc_data')
         self._df = self._get_df()
-
         self._df_preproc_train, self._df_preproc_test = self._train_test_split()
-        self._mean = round(self._df_preproc_train.iloc[:,1:6].apply(pd.value_counts).iloc[1,:].mean()) # mean number of images in each section class in training data set
-        self._section_counts = list(self._df_preproc_train.iloc[:,1:6].apply(pd.value_counts).iloc[1,:].items()) # number of images in each section class (list of tuples) in training data set
+        self._mean = round(self._df_preproc_train.iloc[:,1:5].apply(pd.value_counts).iloc[1,:].mean()) # mean number of images in each section class in training data set
+        self._section_counts = list(self._df_preproc_train.iloc[:,1:5].apply(pd.value_counts).iloc[1,:].items()) # number of images in each section class (list of tuples) in training data set
         self._section_names = [section[0] for section in self._section_counts]
 
     def run(self):
@@ -182,9 +184,8 @@ class SectionPreproc():
     def _get_df(self): # get formatted data frame
         # Sections:
         section = pd.read_csv(os.path.join(self._path_data,'fabric.txt'),sep=' ',names = ['img','upper_original','lower_original','outer','upper','lower'],header=None,index_col=False).fillna(0)
-        section['back'] = np.where(section['img'].str.contains('_back'),1,0)
-        section['full body'] = np.where((section['img'].str.contains('WOMEN-Dresses|WOMEN-Rompers')) & ~section['img'].str.contains('_back'),1,0)
-        section['outfit'] = np.where((((section['upper_original']!=7) |(section['lower_original']!=7)) & ((section['upper_original']!=7) |(section['outer']!=7))) & (section['full body']==0) & (section['back']==0),1,0)
+        section['full body'] = np.where((section['img'].str.contains('WOMEN-Dresses|WOMEN-Rompers')),1,0)
+        section['outfit'] = np.where((((section['upper_original']!=7) |(section['lower_original']!=7)) & ((section['upper_original']!=7) |(section['outer']!=7))) & (section['full body']==0),1,0)
         section = section.drop(columns=['outer','upper_original','lower_original'])
 
         # Landmarks:
@@ -201,21 +202,21 @@ class SectionPreproc():
         lower['lower'] = lower['lower'].apply(lambda x: 1)
         lower['outfit'] = lower['outfit'].apply(lambda x: 0)
         data_full = pd.concat([data_full,upper,lower],axis=0)
-        data_full = data_full[(data_full['outfit']==1) | (data_full['full body']==1) | (data_full['back']==1) | (data_full['upper']==1) | (data_full['lower']==1)]
+        data_full = data_full[(data_full['outfit']==1) | (data_full['full body']==1) | (data_full['upper']==1) | (data_full['lower']==1)]
 
         # Drop invalid rows:
         data_full = data_full[~data_full.isin([-1]).any(1)] # drop rows with inavlid values
-
         return data_full
 
     def _preproc_arrays(self): # create preprocessed arrays
         df_preproc_array_df = pd.DataFrame() # empty data frame to store augmented and original images as numpy arrays
         for section, count in self._section_counts:
+            print(section)
             if count >= self._mean: # if number of section samples is greater than mean number of samples for the section --> undersample
                 print(f"Augmenting section '{section}'...")
                 sample_df = self._df_preproc_train[self._df_preproc_train[section]==1].sample(self._mean,random_state=2) # sample of images corresponding to mean number of samples for the section
                 if section in ['lower', 'upper']:
-                    sample_df['img'] = sample_df.apply(lambda row: self._format_image_outfit(section, row[0], row[6::2].astype(int), row[7::2].astype(int)),axis=1) # split each sampled image into upper/lower, pad and convert to numpy array
+                    sample_df['img'] = sample_df.apply(lambda row: self._format_image_outfit(section, row[0], row[5::2].astype(int), row[6::2].astype(int)),axis=1) # split each sampled image into upper/lower, pad and convert to numpy array
                 else:
                     sample_df['img'] = sample_df.apply(lambda row: self._format_image(row[0]),axis=1) # pad and convert each image to numpy array
                 sample_df = sample_df.iloc[:,:-6] # only store formatted numpy arrays and section columns
@@ -233,7 +234,7 @@ class SectionPreproc():
                 for index, row in enumerate(self._df_preproc_train[self._df_preproc_train[section]==1].values): # iterate over each image beloning to current section
                     sample = sample_values[index] # number of samples to be made for current image
                     if section in ['lower', 'upper']:
-                        cropped_img_array = self._format_image_outfit(section, row[0], row[6::2].astype(int), row[7::2].astype(int))
+                        cropped_img_array = self._format_image_outfit(section, row[0], row[5::2].astype(int), row[6::2].astype(int))
                     else:
                         cropped_img_array = self._format_image(row[0])
                     temp_oversample_df = pd.concat([pd.DataFrame([row], columns = self._df_preproc_train.columns).iloc[:,:-4]]*(sample+1),ignore_index=True) # dataframe to store oversampled images
@@ -262,6 +263,7 @@ class SectionPreproc():
     def _format_image_outfit(self, section, img_name, x, y):
         full_path = os.path.join(self._path_img,img_name) # path to image on user's machine
         img = mpimg.imread(full_path) # load images
+
         if section == 'upper':
             cropped = img[-50+min(y[0],y[2]):max(y[0],y[2]), -100+min(x[0],x[1]):max(x[0],x[1])+100]
         if section == 'lower':
@@ -288,7 +290,6 @@ class LandmarksPreproc():
         self._test_size = test_size
         self._path_data = os.path.join(location, 'preproc_data')
         self._df = self._get_df()
-
         self._df_preproc_train, self._df_preproc_test = self._train_test_split()
 
     def run(self):
@@ -303,11 +304,10 @@ class LandmarksPreproc():
     def _get_df(self): # get formatted data frame
         # Sections:
         section = pd.read_csv(os.path.join(self._path_data,'fabric.txt'),sep=' ',names = ['img','upper_original','lower_original','outer','upper','lower'],header=None,index_col=False).fillna(0)
-        section['back'] = np.where(section['img'].str.contains('_back'),1,0)
-        section['full body'] = np.where((section['img'].str.contains('WOMEN-Dresses|WOMEN-Rompers')) & ~section['img'].str.contains('_back'),1,0)
-        section['outfit'] = np.where((((section['upper_original']!=7) |(section['lower_original']!=7)) & ((section['upper_original']!=7) |(section['outer']!=7))) & (section['full body']==0) & (section['back']==0),1,0)
+        section['full body'] = np.where((section['img'].str.contains('WOMEN-Dresses|WOMEN-Rompers')) ,1,0)
+        section['outfit'] = np.where((((section['upper_original']!=7) |(section['lower_original']!=7)) & ((section['upper_original']!=7) |(section['outer']!=7))) & (section['full body']==0),1,0)
         section = section[section['outfit']==1]
-        section = section.drop(columns=['upper','lower','outer','upper_original','lower_original','outfit','full body','back'])
+        section = section.drop(columns=['upper','lower','outer','upper_original','lower_original','outfit','full body'])
 
         # Landmarks:
         landmarks = pd.read_csv(os.path.join(self._path_data,'keypoints_loc.txt'),sep=' ',usecols=[0,15,16,17,18,29,30,31,32,39,40,41,42],names=['img','x1','y1','x2','y2','x3','y3','x4','y4','x5','y5','x6','y6'], header=None,index_col=False)
@@ -317,7 +317,6 @@ class LandmarksPreproc():
 
         # Drop invalid rows:
         data_full = data_full[~data_full.isin([-1]).any(1)] # drop rows with inavlid values
-        print(data_full)
         return data_full
 
     def _format_image(self, img_name):
@@ -363,7 +362,6 @@ class CategoryPreproc():
     def _get_df(self): # get formatted data frame - only use images of entire model
         # Section:
         section = pd.read_csv(os.path.join(self._path_data,'img.txt'),sep=' ',names = ['img'],header=None,index_col=False).fillna(0)
-        section = section[~section['img'].str.contains('_back')]
 
         # Fabric:
         fabric = pd.read_csv(os.path.join(self._path_data,'fabric.txt'),sep=' ',names = ['img','upper_fabric','lower_fabric'],header=None,index_col=False).fillna(0)
