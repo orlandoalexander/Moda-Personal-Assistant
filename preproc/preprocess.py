@@ -185,7 +185,8 @@ class SectionPreproc():
         # Sections:
         section = pd.read_csv(os.path.join(self._path_data,'fabric.txt'),sep=' ',names = ['img','upper_original','lower_original','outer','upper','lower'],header=None,index_col=False).fillna(0)
         section['full body'] = np.where((section['img'].str.contains('WOMEN-Dresses|WOMEN-Rompers')),1,0)
-        section['outfit'] = np.where((((section['upper_original']!=7) |(section['lower_original']!=7)) & ((section['upper_original']!=7) |(section['outer']!=7))) & (section['full body']==0),1,0)
+        section['outfit'] = np.where((~section['img'].str.contains('WOMEN-Dresses|WOMEN-Rompers')),1,0)
+        #section['outfit'] = np.where((((section['upper_original']!=7) |(section['lower_original']!=7)) & ((section['upper_original']!=7) |(section['outer']!=7))) & (section['full body']==0),1,0)
         section = section.drop(columns=['outer','upper_original','lower_original'])
 
         # Landmarks:
