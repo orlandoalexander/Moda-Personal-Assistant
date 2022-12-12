@@ -1,0 +1,63 @@
+{
+  "section": [
+    "upper",
+    "lower",
+    "back",
+    "full body",
+    "outfit"
+  ],
+  "category": [
+    "Baggy_Pants",
+    "Blouses",
+    "Cardigans",
+    "Dresses",
+    "Graphic_Tees",
+    "Jackets",
+    "Joggers",
+    "Pants",
+    "Rompers",
+    "Shirts",
+    "Shorts",
+    "Skirts",
+    "Suiting",
+    "Sweaters",
+    "Tees"
+  ],
+  "design": [
+    "floral",
+    "graphic",
+    "striped",
+    "embroidered",
+    "pleated",
+    "solid",
+    "lattice"
+  ],
+  "sleeves": [
+    "long_sleeve",
+    "short_sleeve",
+    "sleeveless"
+  ],
+  "length": [
+    "maxi_length",
+    "mini_length"
+  ],
+  "neckline": [
+    "crew_neckline",
+    "v_neckline",
+    "square_neckline",
+    "no_neckline"
+  ],
+  "fabric": [
+    "denim",
+    "chiffon",
+    "cotton",
+    "leather",
+    "faux",
+    "knit"
+  ],
+  "fit": [
+    "tight",
+    "loose",
+    "conventional"
+  ]
+}
