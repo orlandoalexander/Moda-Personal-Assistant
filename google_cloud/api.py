@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 from google.cloud import storage
 
-API_KEY = 'e6d0546079msh1698fc71e2b4d4ep1e1163jsnecaf48e249c5'
 BUCKET_NAME = 'moda-data'
 FILE_NAME = 'moda_asos_data.cvs'
 
