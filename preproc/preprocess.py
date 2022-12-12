@@ -281,16 +281,21 @@ class SectionPreproc():
 
 
 class LandmarksPreproc():
-    def __init__(self, path_img: str, test_size: float) -> None:
+    def __init__(self, path_img: str, resize_dim: tuple, test_size: float) -> None:
         location = os.path.dirname(os.path.realpath(__file__))
         self._path_img = path_img
+        self._resize_dim = resize_dim
         self._test_size = test_size
         self._path_data = os.path.join(location, 'preproc_data')
         self._df = self._get_df()
 
-        self._X_train, self._X_test, self._y_train, self._y_test = self._train_test_split()
+        self._df_preproc_train, self._df_preproc_test = self._train_test_split()
 
     def run(self):
+        self._df_preproc_train['img'] = self._df_preproc_train.apply(lambda row: self._format_image(row[0]),axis=1)
+        self._df_preproc_test['img'] = self._df_preproc_test.apply(lambda row: self._format_image(row[0]),axis=1)
+        self._X_train, self._y_train = self._df_preproc_train.iloc[:,0], np.asarray(self._df_preproc_train.iloc[:,1:])
+        self._X_test, self._y_test = self._df_preproc_test.iloc[:,0], np.asarray(self._df_preproc_test.iloc[:,1:])
         self._X_train, self._X_test = np.array(list(self._X_train)), np.array(list(self._X_test))
         print('Done!')
         return self._X_train, self._X_test, self._y_train, self._y_test
@@ -302,8 +307,7 @@ class LandmarksPreproc():
         section['full body'] = np.where((section['img'].str.contains('WOMEN-Dresses|WOMEN-Rompers')) & ~section['img'].str.contains('_back'),1,0)
         section['outfit'] = np.where((((section['upper_original']!=7) |(section['lower_original']!=7)) & ((section['upper_original']!=7) |(section['outer']!=7))) & (section['full body']==0) & (section['back']==0),1,0)
         section = section[section['outfit']==1]
-        section = section.drop(columns=['outer','upper_original','lower_original','outfit','full body','back'])
-
+        section = section.drop(columns=['upper','lower','outer','upper_original','lower_original','outfit','full body','back'])
 
         # Landmarks:
         landmarks = pd.read_csv(os.path.join(self._path_data,'keypoints_loc.txt'),sep=' ',usecols=[0,15,16,17,18,29,30,31,32,39,40,41,42],names=['img','x1','y1','x2','y2','x3','y3','x4','y4','x5','y5','x6','y6'], header=None,index_col=False)
@@ -313,18 +317,22 @@ class LandmarksPreproc():
 
         # Drop invalid rows:
         data_full = data_full[~data_full.isin([-1]).any(1)] # drop rows with inavlid values
-
+        print(data_full)
         return data_full
 
+    def _format_image(self, img_name):
+        full_path = os.path.join(self._path_img,img_name) # path to image on user's machine
+        img = mpimg.imread(full_path) # load images
+        img_array = np.asarray(img)
+        pad_array, self._pad_color = _format(img_array, self._resize_dim).run()
+        return pad_array
 
     def _train_test_split(self):
-        X = self._df.iloc[:,0]
-        y = self._df.iloc[:,1:]
-        self._X_train, self._X_test, self._y_train, self._y_train = train_test_split(X,y, test_size = self._test_size,random_state=2)
+        self._df_preproc_train, self._df_preproc_test = train_test_split(self._df, test_size = self._test_size,random_state=2)
 
         del self._df
 
-        return self._X_train, self._X_test, self._y_train, self._y_train
+        return self._df_preproc_train, self._df_preproc_test
 
 
 class CategoryPreproc():
