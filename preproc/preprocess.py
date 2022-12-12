@@ -212,7 +212,6 @@ class SectionPreproc():
     def _preproc_arrays(self): # create preprocessed arrays
         df_preproc_array_df = pd.DataFrame() # empty data frame to store augmented and original images as numpy arrays
         for section, count in self._section_counts:
-            print(section)
             if count >= self._mean: # if number of section samples is greater than mean number of samples for the section --> undersample
                 print(f"Augmenting section '{section}'...")
                 sample_df = self._df_preproc_train[self._df_preproc_train[section]==1].sample(self._mean,random_state=2) # sample of images corresponding to mean number of samples for the section
@@ -389,7 +388,7 @@ class CategoryPreproc():
         for index,path in enumerate(os.listdir(self._path_img)):
             if path != '.DS_Store' and os.path.isfile(os.path.join(self._path_img, path)):
                 img_cat = path.split('-')[1]
-                if img_cat=='Sweaters' and path.split('-')[0]=='MEN':
+                if (img_cat=='Sweaters' or img_cat=='Blouses') and path.split('-')[0]=='MEN':
                     img_cat = 'Shirts'
                 replace_cat = [key for key, value in replace_cats.items() if path in value]
                 if replace_cat:
