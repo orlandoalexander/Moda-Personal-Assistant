@@ -28,7 +28,7 @@ class AttributePreproc():
         self._df = self._get_df()
 
         self._attr_names = pd.read_csv(os.path.join(self._path_data,'list_attr_simple.txt'),sep='\s+', header=None).rename(columns={0:'attribute',1:'attribute_type'})
-        self._attr_names['attribute_type'] = self._attr_names['attribute_type'].map({1:'design',2:'sleeves',3:'length',4:'neckline',5:'fabric',6:'fit'})
+        self._attr_names['attribute_type'] = (self._attr_names['attribute_type'].map({1:'design',2:'sleeves',3:'length',4:'neckline',5:'fabric',6:'fit'}))
 
         self._df_preproc = self._preproc_dataframe()
 
@@ -39,7 +39,6 @@ class AttributePreproc():
         self._mean = round(self._df_preproc_train.iloc[:,1:self._index_range_attr[-1]-self._index_range_attr[0]+2].apply(pd.value_counts).iloc[1,:].mean()) # mean number of images in each attribute class in training data set
 
         self._attr_counts = list(self._df_preproc_train.iloc[:,1:self._index_range_attr[-1]-self._index_range_attr[0]+2].apply(pd.value_counts).iloc[1,:].items()) # number of images in each attribute class (list of tuples) in training data set
-
         self._attr_names = [attr[0] for attr in self._attr_counts]
 
     def run(self):
@@ -84,8 +83,7 @@ class AttributePreproc():
         if self._attr_group in ['neckline','sleeves']:
             data_full = data_full[data_full['section']!='lower'] # drop all images classified as 'lower'
         if self._attr_group == 'length':
-            data_full = data_full[(data_full['section']=='outfit') | (data_full['section']!='full body')] # drop all images classified as 'lower' or 'upper
-
+            data_full = (data_full[((data_full['category']=='Dress') & (data_full['no_dress']!=1))]).drop(columns='no_dress') # drop all non-dress images
         return data_full
 
 
@@ -93,6 +91,7 @@ class AttributePreproc():
         # attribute indexes:
         first_attr = self._attr_names[self._attr_names['attribute_type']==self._attr_group].iloc[0,0] # name of first attribute in selected attributed group
         start_index_attr = np.where(self._df.columns==first_attr)[0] # index of first attribute in selected attribute group within passed dataframe
+        self._attr_names.drop(index=12,inplace=True) # drop 'no_dress' attribute
         self._index_range_attr = np.where(self._attr_names['attribute_type'].values==self._attr_group)[0] # range of indexes of attributes within selected attribute group
         end_index_attr = start_index_attr+(self._index_range_attr[-1]-self._index_range_attr[0])+1 # index of final attribute in selected attribute group within passed dataframe
 
@@ -148,7 +147,6 @@ class AttributePreproc():
         full_path = os.path.join(self._path_img,img_name) # path to image on user's machine
         img = mpimg.imread(full_path) # load images
         cropped = img[y1:y2,x1:x2] # crop images
-
         cropped_pad_array, self._pad_color = _format(cropped, self._resize_dim).run()
 
         return cropped_pad_array
@@ -169,7 +167,6 @@ class SectionPreproc():
         self._df = self._get_df()
 
         self._df_preproc_train, self._df_preproc_test = self._train_test_split()
-        print('hi')
         self._mean = round(self._df_preproc_train.iloc[:,1:6].apply(pd.value_counts).iloc[1,:].mean()) # mean number of images in each section class in training data set
         self._section_counts = list(self._df_preproc_train.iloc[:,1:6].apply(pd.value_counts).iloc[1,:].items()) # number of images in each section class (list of tuples) in training data set
         self._section_names = [section[0] for section in self._section_counts]
@@ -282,6 +279,52 @@ class SectionPreproc():
 
         return self._df_preproc_train, self._df_preproc_test
 
+
+class LandmarksPreproc():
+    def __init__(self, path_img: str, test_size: float) -> None:
+        location = os.path.dirname(os.path.realpath(__file__))
+        self._path_img = path_img
+        self._test_size = test_size
+        self._path_data = os.path.join(location, 'preproc_data')
+        self._df = self._get_df()
+
+        self._X_train, self._X_test, self._y_train, self._y_test = self._train_test_split()
+
+    def run(self):
+        self._X_train, self._X_test = np.array(list(self._X_train)), np.array(list(self._X_test))
+        print('Done!')
+        return self._X_train, self._X_test, self._y_train, self._y_test
+
+    def _get_df(self): # get formatted data frame
+        # Sections:
+        section = pd.read_csv(os.path.join(self._path_data,'fabric.txt'),sep=' ',names = ['img','upper_original','lower_original','outer','upper','lower'],header=None,index_col=False).fillna(0)
+        section['back'] = np.where(section['img'].str.contains('_back'),1,0)
+        section['full body'] = np.where((section['img'].str.contains('WOMEN-Dresses|WOMEN-Rompers')) & ~section['img'].str.contains('_back'),1,0)
+        section['outfit'] = np.where((((section['upper_original']!=7) |(section['lower_original']!=7)) & ((section['upper_original']!=7) |(section['outer']!=7))) & (section['full body']==0) & (section['back']==0),1,0)
+        section = section[section['outfit']==1]
+        section = section.drop(columns=['outer','upper_original','lower_original','outfit','full body','back'])
+
+
+        # Landmarks:
+        landmarks = pd.read_csv(os.path.join(self._path_data,'keypoints_loc.txt'),sep=' ',usecols=[0,15,16,17,18,29,30,31,32,39,40,41,42],names=['img','x1','y1','x2','y2','x3','y3','x4','y4','x5','y5','x6','y6'], header=None,index_col=False)
+
+        # Create full data set:
+        data_full = section.merge(landmarks, on='img',how='left').dropna()
+
+        # Drop invalid rows:
+        data_full = data_full[~data_full.isin([-1]).any(1)] # drop rows with inavlid values
+
+        return data_full
+
+
+    def _train_test_split(self):
+        X = self._df.iloc[:,0]
+        y = self._df.iloc[:,1:]
+        self._X_train, self._X_test, self._y_train, self._y_train = train_test_split(X,y, test_size = self._test_size,random_state=2)
+
+        del self._df
+
+        return self._X_train, self._X_test, self._y_train, self._y_train
 
 
 class CategoryPreproc():
