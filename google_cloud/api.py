@@ -21,24 +21,33 @@ class API():
         with open('exclude_items.txt', 'r') as f:
             self._exclude = [item.lower() for item in f.read().splitlines()]
         products = []
-        for cat in self._cats:
+        for index, cat in enumerate(self._cats):
+            print(f'\nCategory {index+1}')
+            print('\tQuery 1')
             querystring = {f"store":"US","offset":0,"categoryId":{cat},"limit":48,"sort":"freshness","lang":"en-UK"}
             response = requests.request("GET", self._url_products, headers=self._headers, params=querystring).json()
+            product = [{'id':product['id'],'name':product['name'],'price_current':product['price']['current']['value'],'price_previous':product['price']['previous']['value'],'marked_down':product['price']['isMarkedDown'],'outlet':product['price']['isOutletPrice'],'selling_fast':product['isSellingFast'],'brand':product['brandName'], 'category':cat, 'url':'https://www.asos.com/us/'+product['url'], 'url_image': [product['imageUrl']]+[product['imageUrl'][:product['imageUrl'].index(f"{product['id']}-")]+f"{product['id']}-{num}" for num in range(2,5)]} for product in response['products']] # if not any([word.lower() in self._exclude for word in product['name'].split(' ')])
+            products.extend(product)
             product_count = response['itemCount']
-            query_vals = [(48,48)]
+            query_vals = [(0,48)]
+            n=48
             while sum(query_vals[-1]) < product_count:
                 diff = (product_count-(query_vals[-1][0]+48))
                 if diff < 48:
                     n = diff%48
                 query_vals.append((query_vals[-1][0]+48,n))
             query_vals.pop(0)
-            for query_val in query_vals:
+
+            for index_nested, query_val in enumerate(query_vals):
+                time.sleep(5)
+                print(f'\tQuery {index_nested+2}')
                 querystring = {f"store":"US","offset":query_val[0],"categoryId":{cat},"limit":query_val[1],"sort":"freshness","lang":"en-UK"}
                 response = requests.request("GET", self._url_products, headers=self._headers, params=querystring).json()
-            product = [{'id':product['id'],'name':product['name'],'price_current':product['price']['current']['value'],'price_previous':product['price']['previous']['value'],'marked_down':product['price']['isMarkedDown'],'outlet':product['price']['isOutletPrice'],'selling_fast':product['isSellingFast'],'brand':product['brandName'], 'category':cat, 'url':'https://www.asos.com/us/'+product['url'], 'url_image': [product['imageUrl']]+[product['imageUrl'][:product['imageUrl'].index(f"{product['id']}-")]+f"{product['id']}-{num}" for num in range(2,5)]} for product in response['products'] if not any([word.lower() in self._exclude for word in product['name'].split(' ')])]
-            products.extend(product)
+                product = [{'id':product['id'],'name':product['name'],'price_current':product['price']['current']['value'],'price_previous':product['price']['previous']['value'],'marked_down':product['price']['isMarkedDown'],'outlet':product['price']['isOutletPrice'],'selling_fast':product['isSellingFast'],'brand':product['brandName'], 'category':cat, 'url':'https://www.asos.com/us/'+product['url'], 'url_image': [product['imageUrl']]+[product['imageUrl'][:product['imageUrl'].index(f"{product['id']}-")]+f"{product['id']}-{num}" for num in range(2,5)]} for product in response['products']] # if not any([word.lower() in self._exclude for word in product['name'].split(' ')])
+                products.extend(product)
             np.save('products.npy',np.array(products))
-            if len(products) > 10:
+            print(f'\tTotal products: {len(products)}')
+            if len(products) > 1000:
                 break
         self._df = pd.DataFrame(products)
         self._save_to_bq()
@@ -51,7 +60,7 @@ class API():
         return cats
 
     def _save_to_bq(self):
-        client = storage.Client(project='lewagonbootcamp-371116')
+        client = storage.Client()
         bucket = client.bucket(self._bucket_name)
         blob = bucket.blob(self._file_name)
         blob.upload_from_string(self._df.to_csv(index = False),content_type = 'csv')
