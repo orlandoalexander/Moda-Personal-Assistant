@@ -5,6 +5,7 @@ from google.cloud import storage
 
 BUCKET_NAME = 'moda-data'
 FILE_NAME = 'moda_asos_data.cvs'
+API_KEY = '258cb0bf54mshcd641e15d77cab4p158b99jsn86df1a529ca1'
 
 
 class API():
@@ -36,6 +37,7 @@ class API():
                 response = requests.request("GET", self._url_products, headers=self._headers, params=querystring).json()
             product = [{'id':product['id'],'name':product['name'],'price_current':product['price']['current']['value'],'price_previous':product['price']['previous']['value'],'marked_down':product['price']['isMarkedDown'],'outlet':product['price']['isOutletPrice'],'selling_fast':product['isSellingFast'],'brand':product['brandName'], 'category':cat, 'url':'https://www.asos.com/us/'+product['url'], 'url_image': [product['imageUrl']]+[product['imageUrl'][:product['imageUrl'].index(f"{product['id']}-")]+f"{product['id']}-{num}" for num in range(2,5)]} for product in response['products'] if not any([word.lower() in self._exclude for word in product['name'].split(' ')])]
             products.extend(product)
+            np.save('products.npy',np.array(products))
             if len(products) > 10:
                 break
         self._df = pd.DataFrame(products)
@@ -54,8 +56,6 @@ class API():
         blob = bucket.blob(self._file_name)
         blob.upload_from_string(self._df.to_csv(index = False),content_type = 'csv')
 
-def main(data, context):
-  api_asos = API(API_KEY, BUCKET_NAME, FILE_NAME)
-  api_asos.get_products()
 
-main(1,1)
+api_asos = API(API_KEY, BUCKET_NAME, FILE_NAME)
+api_asos.get_products()
