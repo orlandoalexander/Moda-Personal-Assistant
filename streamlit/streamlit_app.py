@@ -30,6 +30,26 @@ request_url = form.text_input('Or', 'Paste URL')
 
 form.form_submit_button('Search')
 
+import streamlit as st
+import time
+
+'Starting a long computation...'
+
+# Add a placeholder
+latest_iteration = st.empty()
+bar = st.progress(0)
+
+for i in range(100):
+  # Update the progress bar with each iteration.
+  latest_iteration.text(f'Iteration {i+1}')
+  bar.progress(i + 1)
+  time.sleep(0.1)
+
+'...and now we\'re done!'
+
+price_filter = st.slider('price in $', 1, 200, 75)  # min: 0$, max: 200$, default: 75
+
+
 #fashion_api_url = 'https://taxifare.lewagon.ai/predict'
 #response = requests.get(wagon_cap_api_url, params=params)
 
