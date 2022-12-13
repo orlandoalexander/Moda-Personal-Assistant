@@ -174,9 +174,9 @@ class SectionPreproc():
 
     def run(self):
         self._df_preproc_array_df = self._preproc_arrays()
-        self._df_preproc_train, self._df_preproc_test = self._train_test_split()
-        self._X_train, self._y_train = self._df_preproc_train.iloc[:,0], np.asarray(self._df_preproc_train.iloc[:,1:5])
-        self._X_test, self._y_test = self._df_preproc_test.iloc[:,0], np.asarray(self._df_preproc_test.iloc[:,1:5])
+        self._X = self._df_preproc_array_df.iloc[:,0]
+        self._y = np.asarray(self._df_preproc_array_df.iloc[:,1:5])
+        self._X_train, self._X_test, self._y_train, self._y_test = self._train_test_split()
         self._X_train, self._X_test = np.array(list(self._X_train)), np.array(list(self._X_test))
         print('Done!')
         return self._X_train, self._X_test, self._y_train, self._y_test, self._section_names
@@ -275,11 +275,11 @@ class SectionPreproc():
         return cropped_pad_array
 
     def _train_test_split(self):
-        self._df_preproc_train, self._df_preproc_test = train_test_split(self._df_preproc_array_df, test_size = self._test_size,random_state=2)
+        self._X_train, self._X_test, self._y_train, self._y_test = train_test_split(self._X, self._y, test_size = self._test_size,random_state=2)
 
-        del self._df
+        del self._X, self._y
 
-        return self._df_preproc_train, self._df_preproc_test
+        return self._X_train, self._X_test, self._y_train, self._y_test
 
 
 class LandmarksPreproc():
@@ -342,22 +342,24 @@ class CategoryPreproc():
         self._test_size = test_size
         self._path_data = os.path.join(location, 'preproc_data')
         self._df = self._get_df()
-        self._df_preproc_train, self._df_preproc_test = self._train_test_split()
 
-        self._mean = round(self._df_preproc_train.category.value_counts().mean()) # mean number of images in each category class in training data set
-        self._section_counts = list(self._df_preproc_train.category.value_counts().items()) # number of images in each category class (list of tuples) in training data set
+        self._mean = round(self._df.category.value_counts().mean()) # mean number of images in each category class in training data set
+        self._section_counts = list(self._df.category.value_counts().items()) # number of images in each category class (list of tuples) in training data set
 
     def run(self):
-        self._X_train, self._y_train, cat_names = self._preproc_arrays()
-        self._df_preproc_test['img'] = self._df_preproc_test.apply(lambda row: self._format_image(row[0]),axis=1)
-        ohe = OneHotEncoder(sparse=False)
-        y_test = np.expand_dims(self._df_preproc_test.iloc[:,-1],axis=1)
-        self._y_test = ohe.fit_transform(y_test)
+        self._df_preproc_array_df = self._preproc_arrays()
+        self._X = self._df_preproc_array_df.iloc[:,0]
 
-        self._X_test = self._df_preproc_test.iloc[:,0]
+        ohe = OneHotEncoder(sparse=False)
+        self._y = np.expand_dims(self._df_preproc_array_df.iloc[:,-1],axis=1)
+        self._y= ohe.fit_transform(self._y)
+        category_names = [name.replace('x0_','') for name in ohe.get_feature_names_out()]
+
+        self._X_train, self._X_test, self._y_train, self._y_test = self._train_test_split()
+
         self._X_train, self._X_test = np.array(list(self._X_train)), np.array(list(self._X_test))
         print('Done!')
-        return self._X_train, self._X_test, self._y_train, self._y_test, cat_names
+        return self._X_train, self._X_test, self._y_train, self._y_test, category_names
 
     def _get_df(self): # get formatted data frame - only use images of entire model
         # Section:
@@ -414,7 +416,7 @@ class CategoryPreproc():
         for category, count in self._section_counts:
             if count >= self._mean: # if number of category samples is greater than mean number of samples for the category --> undersample
                 print(f"Augmenting category '{category}'...")
-                sample_df = self._df_preproc_train[self._df_preproc_train['category']==category].sample(self._mean,random_state=2) # sample of images corresponding to mean number of samples for the category
+                sample_df = self._df[self._df['category']==category].sample(self._mean,random_state=2) # sample of images corresponding to mean number of samples for the category
                 if category in ['Tees', 'Blouses','Sweaters','Jackets','Cardigans','Graphic_Tees','Shirts']: # if category is of 'upper' type
                     sample_df['img'] = sample_df.apply(lambda row: self._format_image_crop('upper', row[0], row[1:-1:2].astype(int), row[2:-1:2].astype(int)),axis=1) # crop upper half of image, pad and convert to numpy array
                 elif category in ['Shorts', 'Pants', 'Skirts', 'Joggers', 'Baggy_Pants']:
@@ -433,7 +435,7 @@ class CategoryPreproc():
                     remaining_sum-=1
                     i = (i+1)%len(sample_values)
                 sample_df = pd.DataFrame() # empty dataframe to store augmented images
-                for index, row in enumerate(self._df_preproc_train[self._df_preproc_train.category==category].values): # iterate over each image beloning to current category
+                for index, row in enumerate(self._df[self._df.category==category].values): # iterate over each image beloning to current category
                     sample = sample_values[index] # number of samples to be made for current image
                     if category in ['Tees', 'Blouses','Sweaters','Jackets','Cardigans','Graphic_Tees','Shirts']:
                         cropped_img_array = self._format_image_crop('upper', row[0], row[1:-1:2].astype(int), row[2:-1:2].astype(int))
@@ -441,7 +443,7 @@ class CategoryPreproc():
                         cropped_img_array = self._format_image_crop('lower', row[0], row[1:-1:2].astype(int), row[2:-1:2].astype(int))
                     else:
                         cropped_img_array = self._format_image(row[0])
-                    temp_oversample_df = pd.concat([pd.DataFrame([row], columns = self._df_preproc_train.columns).iloc[:,np.r_[0,-1]]]*(sample+1),ignore_index=True) # dataframe to store oversampled images
+                    temp_oversample_df = pd.concat([pd.DataFrame([row], columns = self._df.columns).iloc[:,np.r_[0,-1]]]*(sample+1),ignore_index=True) # dataframe to store oversampled images
                     augmented_img_array = []
                     if sample != 0: # if at least one augmentation must be made
                         augmented_img_array = _augment(cropped_img_array,sample, self._pad_color).run() # augment image 'sample' times and convert each augmentation to numpy array
@@ -455,12 +457,7 @@ class CategoryPreproc():
             df_preproc_array_df = pd.concat([df_preproc_array_df,sample_df],axis=0)
             del sample_df
 
-        ohe = OneHotEncoder(sparse=False)
-        y_train = np.expand_dims(df_preproc_array_df.iloc[:,-1],axis=1)
-        y_train = ohe.fit_transform(y_train)
-        category_names = [name.replace('x0_','') for name in ohe.get_feature_names_out()]
-
-        return df_preproc_array_df.iloc[:,0], y_train, category_names
+        return df_preproc_array_df
 
     def _format_image(self, img_name):
         full_path = os.path.join(self._path_img,img_name) # path to image on user's machine
@@ -485,6 +482,8 @@ class CategoryPreproc():
         return cropped_pad_array
 
     def _train_test_split(self):
-        self._df_preproc_train, self._df_preproc_test = train_test_split(self._df, test_size = self._test_size,random_state=2)
+        self._X_train, self._X_test, self._y_train, self._y_test = train_test_split(self._X, self._y, test_size = self._test_size,random_state=2)
 
-        return self._df_preproc_train, self._df_preproc_test
+        del self._X, self._y
+
+        return self._X_train, self._X_test, self._y_train, self._y_test
