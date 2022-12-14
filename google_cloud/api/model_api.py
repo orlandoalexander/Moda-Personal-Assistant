@@ -1,10 +1,10 @@
 from fastapi import FastAPI, UploadFile, File
 import numpy as np
-import threading
 from google.cloud import storage
 from keras.applications import efficientnet, mobilenet, resnet
 from keras.models import load_model
 from PIL import Image
+from tensorflow.python.lib.io import file_io
 
 BUCKET_NAME = "moda-trained-models"
 RESIZE_SHAPE = (224, 224)
@@ -64,15 +64,6 @@ CLASS_PREDS = {}
 COMPLETE_PREDS = {}
 
 app = FastAPI()  # intialise FastAPI object
-
-def load_models():
-    global LOADED_MODELS
-    for model in LOADED_MODELS.keys():
-        print(model)
-        if model != 'landmarks': # TODO
-            LOADED_MODELS[model] = load_model(f"models/{model}/")
-    return
-
 
 def get_pad_color(im):
     left = im[:,0]
@@ -176,24 +167,38 @@ def predict():
     print(COMPLETE_PREDS)
     return {'results': CLASS_PREDS}
 
+@app.get('/')
+def test():
+    return {"Success": True}
+
 
 @app.get('/init')
-def root():
-    load_models()
-    return {'message': 'All models successfully loaded'}
-
-@app.get('/update_models')
-def update_models(models):
+def update_models():
+    global LOADED_MODELS
     client = storage.Client(project='lewagonbootcamp-371116')
     bucket = client.bucket(BUCKET_NAME)
     blobs = bucket.list_blobs()
     for blob in blobs:
-        name = blob.name.split('/')
-        print(blob.name)
-        if (name[1] != '') and name[0] in models:
-            file = bucket.blob(blob.name)
-            file.download_to_filename(f'models/{blob.name}')
-    return {"message": f"Successfully updated all models from Google Cloud"}
+        filename = blob.name
+        model_name = filename[:-3]
+        if model_name == 'example':
+            model_file = file_io.FileIO(f'gs://{BUCKET_NAME}/{filename}', mode='rb')
+            temp_model_location = f'./temp_{filename}'
+            temp_model_file = open(temp_model_location, 'wb')
+            temp_model_file.write(model_file.read())
+            temp_model_file.close()
+            model_file.close()
+            LOADED_MODELS[model_name] = load_model(temp_model_location)
+    return {'message': 'All models successfully loaded'}
+
+
+
+    #     name = blob.name.split('/')
+    #     print(blob.name)
+    #     if (name[1] != '') and name[0] in models:
+    #         file = bucket.blob(blob.name)
+    #         file.download_to_filename(f'models/{blob.name}')
+    # return {"message": f"Successfully updated all models from Google Cloud"}
 
 
 @app.post('/predict')
