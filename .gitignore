@@ -1,3 +1,10 @@
 Data/
 
 .DS_Store
+
+Models/saved_models/Current/resnet_category_v1/variables/variables.data-00000-of-00001
+
+Models/saved_models/Current/resnet_design_v1/variables/variables.data-00000-of-00001
+
+Models/saved_models/resnet_fabric_v1/variables/variables.data-00000-of-0000
+
