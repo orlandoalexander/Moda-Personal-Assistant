@@ -1,6 +1,5 @@
 import numpy as np
 from keras.preprocessing.image import ImageDataGenerator
-from PIL import Image
 
 
 class _format(): # resize and pad image with appropriate background color
@@ -20,6 +19,13 @@ class _format(): # resize and pad image with appropriate background color
         x, y = np.ogrid[0:scale_x, 0:scale_y]
 
         cropped_array = cropped_array[(x//scale).astype(int), (y//scale).astype(int)]
+
+
+        # TEST:
+        y_crop = cropped_array.shape[0]
+        x_crop = cropped_array.shape[1]
+        cropped_array = cropped_array[y//4:y-y//4,x//4:x-x//4,:]
+
 
 
         # Pad missing pixels to resize image to require dimensions
@@ -44,10 +50,7 @@ class _format(): # resize and pad image with appropriate background color
 
         pad_color = self._get_pad_color()
 
-        cropped_pad_array = np.pad(cropped_array,pad_width=((ax0_pad_left, ax0_pad_right),(ax1_pad_left, ax1_pad_right),(0, 0)),constant_values=pad_color) # pad image with white background
-
-        im = Image.fromarray(cropped_pad_array)
-        im.save('test.jpg')
+        cropped_pad_array = np.stack([np.pad(cropped_array[:,:,c], ((ax0_pad_left, ax0_pad_right),(ax1_pad_left, ax1_pad_right)), mode='constant', constant_values=pad_color[c]) for c in range(3)], axis=2)
 
         del cropped_array
 
@@ -56,9 +59,8 @@ class _format(): # resize and pad image with appropriate background color
     def _get_pad_color(self):
         left = self._image[:,0]
         right = self._image[:,-1]
-        edge_color = int(np.concatenate((left, right)).mean())
-        mean_color = (edge_color,edge_color)
-        return mean_color
+        edge_color = (np.concatenate((left, right)).mean(axis=0))
+        return edge_color
 
 
 class _augment():
