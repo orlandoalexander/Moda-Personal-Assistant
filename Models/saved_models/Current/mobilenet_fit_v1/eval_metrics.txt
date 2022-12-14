@@ -1,0 +1,1 @@
+{"loss": 0.5312, "accuracy": 0.7958, "precision": 0.7999, "recall": 0.7855}
