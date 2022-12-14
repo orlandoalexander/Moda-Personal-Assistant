@@ -171,35 +171,16 @@ def predict():
 def test():
     return {"Success": True}
 
-
 @app.get('/init')
 def update_models():
     global LOADED_MODELS
-    client = storage.Client(project='lewagonbootcamp-371116')
-    bucket = client.bucket(BUCKET_NAME)
-    blobs = bucket.list_blobs()
-    for blob in blobs:
-        filename = blob.name
-        model_name = filename[:-3]
-        if model_name == 'example':
-            model_file = file_io.FileIO(f'gs://{BUCKET_NAME}/{filename}', mode='rb')
-            temp_model_location = f'./temp_{filename}'
-            temp_model_file = open(temp_model_location, 'wb')
-            temp_model_file.write(model_file.read())
-            temp_model_file.close()
-            model_file.close()
-            LOADED_MODELS[model_name] = load_model(temp_model_location)
+    for model_name in LOADED_MODELS.keys():
+        if model_name != 'landmarks': # TODO
+            path = f'gs://{BUCKET_NAME}/{model_name}'
+            model = load_model(path)
+            LOADED_MODELS[model_name] = model
+            print(f'{model_name} loaded')
     return {'message': 'All models successfully loaded'}
-
-
-
-    #     name = blob.name.split('/')
-    #     print(blob.name)
-    #     if (name[1] != '') and name[0] in models:
-    #         file = bucket.blob(blob.name)
-    #         file.download_to_filename(f'models/{blob.name}')
-    # return {"message": f"Successfully updated all models from Google Cloud"}
-
 
 @app.post('/predict')
 def upload(file: UploadFile = File(...)):
