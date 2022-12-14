@@ -59,21 +59,19 @@ CLASSES = {
     "fabric": ["denim", "chiffon", "cotton", "leather", "faux", "knit"],
     "fit": ["tight", "loose", "conventional"]
 }
-# MODEL_ENDPOINTS = {
-#     'section': 8725412016728047616,
-#     'landmarks': 'TBC',
-#     'category': 3258886494030397440,
-#     'sleeves': 3420171655685603328,
-#     'fabric': 4451214495376736256,
-#     'neckline': 3361624860529786880,
-#     'length': 1903303006191878144,
-#     'design': 3357965685832548352,
-#     'fit': 7973310878957174784
-# }
+
 CLASS_PREDS = {}
 COMPLETE_PREDS = {}
 
 app = FastAPI()  # intialise FastAPI object
+
+def load_models():
+    global LOADED_MODELS
+    for model in LOADED_MODELS.keys():
+        print(model)
+        if model != 'landmarks': # TODO
+            LOADED_MODELS[model] = load_model(f"models/{model}/")
+    return
 
 
 def get_pad_color(im):
@@ -122,15 +120,6 @@ def preprocess(cropped_array, resize_dim, model_type):
     return cropped_pad_array_preproc
 
 
-def load_models():
-    global LOADED_MODELS
-    for model in LOADED_MODELS.keys():
-        print(model)
-        if model != 'landmarks': # TODO
-            LOADED_MODELS[model] = load_model(f"models/{model}/")
-    return
-
-
 def model_predict(im_array, model_type, section):
     global CLASS_PREDS
     global COMPLETE_PREDS
@@ -152,6 +141,9 @@ def model_predict(im_array, model_type, section):
     CLASS_PREDS[model_type] = predicted_class_name
 
     return predicted_class_name
+
+def get_colors():
+    pass
 
 def predict():
     global CLASS_PREDS
@@ -216,40 +208,3 @@ def upload(file: UploadFile = File(...)):
         file.file.close()
 
     return predict()
-
-
-
-#return {"message": f"Successfully uploaded {file.filename}"}
-
-
-# @app.post('/predict')
-# def predict():
-#     global CLASS_PREDS
-#     global COMPLETE_PREDS
-#     CLASS_PREDS = {}
-#     COMPLETE_PREDS = {}
-#     im = Image.open('pred.png')
-#     im_array = np.asarray(im)
-
-#     section = model_predict(im_array, 'section', None)
-
-#     if section == 'upper':
-#         attr_models = ['category','design', 'sleeves', 'neckline', 'fabric', 'fit']
-
-#     if section == 'lower':
-#         attr_models = ['category','design', 'fabric', 'fit']
-
-#     if section == 'full body':
-#         attr_models = ['category','design', 'length', 'sleeves', 'neckline', 'fabric', 'fit']
-
-#     if section == 'outfit':
-#         pass
-#         # TODO
-
-#     for attr_model in attr_models:
-#         model_predict(im_array, attr_model, section)
-
-#     # COLOR TODO
-
-#     print(COMPLETE_PREDS)
-#     return {'results': CLASS_PREDS}
