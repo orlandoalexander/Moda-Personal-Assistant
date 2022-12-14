@@ -10,6 +10,11 @@ class _format(): # resize and pad image with appropriate background color
     def run(self):
         cropped_array = np.asarray(self._image)
 
+        # TEST:
+        y_crop = cropped_array.shape[0]
+        x_crop = cropped_array.shape[1]
+        cropped_array = cropped_array[y_crop//4:y_crop-y_crop//4,x_crop//4:x_crop-x_crop//4,:]
+
         # 'Zoom' image so either x or y dimensions fits corresponding resize dimensions (or as near as possible)
         if cropped_array.shape[0] > cropped_array.shape[1]:
             scale = (self._resize_dim[1]-1)/cropped_array.shape[0]
@@ -19,12 +24,6 @@ class _format(): # resize and pad image with appropriate background color
         x, y = np.ogrid[0:scale_x, 0:scale_y]
 
         cropped_array = cropped_array[(x//scale).astype(int), (y//scale).astype(int)]
-
-
-        # TEST:
-        y_crop = cropped_array.shape[0]
-        x_crop = cropped_array.shape[1]
-        cropped_array = cropped_array[y_crop//4:y_crop-y_crop//4,x_crop//4:x_crop-x_crop//4,:]
 
 
 
