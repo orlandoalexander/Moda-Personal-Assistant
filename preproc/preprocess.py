@@ -85,6 +85,8 @@ class AttributePreproc():
         # Drop invalid rows:
         if self._attr_group in ['neckline','sleeves']:
             data_full = data_full[data_full['section']!='lower'] # drop all images classified as 'lower'
+            if self._attr_group == 'neckline':
+                data_full = (data_full[data_full['no_neckline']!=1]).drop(columns='no_neckline')
         if self._attr_group == 'length':
             data_full = (data_full[((data_full['category']=='Dress') & (data_full['no_dress']!=1))]).drop(columns='no_dress') # drop all non-dress images
         return data_full
@@ -94,7 +96,7 @@ class AttributePreproc():
         # attribute indexes:
         first_attr = self._attr_names[self._attr_names['attribute_type']==self._attr_group].iloc[0,0] # name of first attribute in selected attributed group
         start_index_attr = np.where(self._df.columns==first_attr)[0] # index of first attribute in selected attribute group within passed dataframe
-        self._attr_names.drop(index=12,inplace=True) # drop 'no_dress' attribute
+        self._attr_names.drop(index=[12,16],inplace=True) # drop 'no_dress' attribute
         self._index_range_attr = np.where(self._attr_names['attribute_type'].values==self._attr_group)[0] # range of indexes of attributes within selected attribute group
         end_index_attr = start_index_attr+(self._index_range_attr[-1]-self._index_range_attr[0])+1 # index of final attribute in selected attribute group within passed dataframe
 
