@@ -13,7 +13,7 @@ class _format(): # resize and pad image with appropriate background color
         # TEST:
         y_crop = cropped_array.shape[0]
         x_crop = cropped_array.shape[1]
-        cropped_array = cropped_array[y_crop//4:y_crop-y_crop//4,x_crop//4:x_crop-x_crop//4,:]
+        cropped_array = cropped_array[y_crop//3:y_crop-y_crop//3,x_crop//3:x_crop-x_crop//3,:]
 
         # 'Zoom' image so either x or y dimensions fits corresponding resize dimensions (or as near as possible)
         if cropped_array.shape[0] > cropped_array.shape[1]:
