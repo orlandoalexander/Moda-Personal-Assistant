@@ -6,4 +6,9 @@ Models/saved_models/Current/resnet_category_v1/variables/variables.data-00000-of
 
 Models/saved_models/Current/resnet_design_v1/variables/variables.data-00000-of-00001
 
+<<<<<<< HEAD
 Models/saved_models/resnet_fabric_v1/variables/variables.data-00000-of-00001
+=======
+Models/saved_models/resnet_fabric_v1/variables/variables.data-00000-of-0000
+
+>>>>>>> ed68f8d8dc170af759ff08cc23215ef77b9803fb
