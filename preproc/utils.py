@@ -24,7 +24,7 @@ class _format(): # resize and pad image with appropriate background color
         # TEST:
         y_crop = cropped_array.shape[0]
         x_crop = cropped_array.shape[1]
-        cropped_array = cropped_array[y//4:y-y//4,x//4:x-x//4,:]
+        cropped_array = cropped_array[y_crop//4:y_crop-y_crop//4,x_crop//4:x_crop-x_crop//4,:]
 
 
 
