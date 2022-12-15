@@ -11,7 +11,7 @@ from streamlit import beta_container
 ima_url1 = "https://picsum.photos/200/300"
 
 st.image(
-            sys.path[0] + '/../header2.png',
+            'header2.png',
             width=700, # Manually Adjust the width of the image as per requirement
         )
 
