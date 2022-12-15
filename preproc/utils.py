@@ -53,7 +53,7 @@ class _format(): # resize and pad image with appropriate background color
 
         del cropped_array
 
-        return cropped_pad_array, pad_color[0]
+        return cropped_pad_array, pad_color[0], ax1_pad_right, ax0_pad_right
 
     def _get_pad_color(self):
         left = self._image[:,0]
