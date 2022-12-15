@@ -3,17 +3,14 @@ from keras.preprocessing.image import ImageDataGenerator
 
 
 class _format(): # resize and pad image with appropriate background color
-    def __init__(self, image, resize_dim) -> None:
+    def __init__(self, image, resize_dim, landmark = False) -> None:
         self._image = image
         self._resize_dim = resize_dim
+        self._landmark = landmark
 
     def run(self):
         cropped_array = np.asarray(self._image)
 
-        # # TEST:
-        # y_crop = cropped_array.shape[0]
-        # x_crop = cropped_array.shape[1]
-        # cropped_array = cropped_array[y_crop//6:y_crop-y_crop//6,x_crop//6:x_crop-x_crop//6,:]
 
         # 'Zoom' image so either x or y dimensions fits corresponding resize dimensions (or as near as possible)
         if cropped_array.shape[0] > cropped_array.shape[1]:
@@ -24,7 +21,6 @@ class _format(): # resize and pad image with appropriate background color
         x, y = np.ogrid[0:scale_x, 0:scale_y]
 
         cropped_array = cropped_array[(x//scale).astype(int), (y//scale).astype(int)]
-
 
 
         # Pad missing pixels to resize image to require dimensions
@@ -38,22 +34,25 @@ class _format(): # resize and pad image with appropriate background color
                 ax0_pad_right = ax0_pad_left + 1
 
         if cropped_array.shape[1] % 2 == 0:
-            ax1_pad_left = ax1_pad_right = int((self._resize_dim[0] - cropped_array.shape[1])/2)
+            ax1_pad_lower = ax1_pad_upper = int((self._resize_dim[0] - cropped_array.shape[1])/2)
         else:
             dif = (self._resize_dim[0] - cropped_array.shape[1])
-            ax1_pad_left = int(dif/2)
-            ax1_pad_right=0
+            ax1_pad_lower = int(dif/2)
+            ax1_pad_upper=0
             if dif > 0:
-                ax1_pad_right = ax1_pad_left + 1
+                ax1_pad_upper = ax1_pad_lower + 1
 
 
         pad_color = self._get_pad_color()
 
-        cropped_pad_array = np.stack([np.pad(cropped_array[:,:,c], ((ax0_pad_left, ax0_pad_right),(ax1_pad_left, ax1_pad_right)), mode='constant', constant_values=pad_color[c]) for c in range(3)], axis=2)
+        cropped_pad_array = np.stack([np.pad(cropped_array[:,:,c], ((ax0_pad_left, ax0_pad_right),(ax1_pad_lower, ax1_pad_upper)), mode='constant', constant_values=pad_color[c]) for c in range(3)], axis=2)
 
         del cropped_array
 
-        return cropped_pad_array, pad_color[0], ax1_pad_right, ax0_pad_right
+        if self._landmark:
+            return cropped_pad_array, pad_color[0], scale, ax0_pad_left, ax1_pad_lower
+        else:
+            return cropped_pad_array, pad_color[0]
 
     def _get_pad_color(self):
         left = self._image[:,0]

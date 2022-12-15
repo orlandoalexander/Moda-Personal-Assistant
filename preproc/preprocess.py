@@ -291,15 +291,26 @@ class LandmarksPreproc():
         self._path_data = os.path.join(location, 'preproc_data')
         self._df = self._get_df()
         self._df_preproc_train, self._df_preproc_test = self._train_test_split()
+        self._scales = []
+        self._horizontal_shifts = []
+        self._vertical_shifts = []
 
     def run(self):
         self._df_preproc_train['img'] = self._df_preproc_train.apply(lambda row: self._format_image(row[0]),axis=1)
         self._df_preproc_test['img'] = self._df_preproc_test.apply(lambda row: self._format_image(row[0]),axis=1)
-        self._X_train, self._y_train = self._df_preproc_train.iloc[:,0], np.asarray(self._df_preproc_train.iloc[:,1:])
-        self._X_test, self._y_test = self._df_preproc_test.iloc[:,0], np.asarray(self._df_preproc_test.iloc[:,1:])
+        self._X_train, self._y_train = self._df_preproc_train.iloc[:,0], pd.DataFrame(self._df_preproc_train.iloc[:,1:].apply(lambda row: self._transformer(row[::2], row[1::2]),axis=1).tolist())
+        self._X_test, self._y_test = self._df_preproc_test.iloc[:,0], pd.DataFrame(self._df_preproc_test.iloc[:,1:].apply(lambda row: self._transformer(row[::2], row[1::2]),axis=1).tolist())
         self._X_train, self._X_test = np.array(list(self._X_train)), np.array(list(self._X_test))
         print('Done!')
         return self._X_train, self._X_test, self._y_train, self._y_test
+
+    def _transformer(self, x,y):
+        scaler = self._scales.pop(0)
+        horizontal_shift = self._horizontal_shifts.pop(0)
+        vertical_shift = self._vertical_shifts.pop(0)
+        x_transformed = (x*scaler)+horizontal_shift
+        y_transformed = (y*scaler)+vertical_shift
+        return np.hstack((x_transformed.values, y_transformed.values))
 
     def _get_df(self): # get formatted data frame
         # Sections:
@@ -323,7 +334,10 @@ class LandmarksPreproc():
         full_path = os.path.join(self._path_img,img_name) # path to image on user's machine
         img = mpimg.imread(full_path) # load images
         img_array = np.asarray(img)
-        pad_array, self._pad_color = _format(img_array, self._resize_dim).run()
+        pad_array, self._pad_color, self._scale, self._vertical_shift, self._horizontal_shift= _format(img_array, self._resize_dim, landmark = True).run()
+        self._scales.append(self._scale)
+        self._horizontal_shifts.append(self._horizontal_shift)
+        self._vertical_shifts.append(self._vertical_shift)
         return pad_array
 
     def _train_test_split(self):
