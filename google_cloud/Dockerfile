@@ -13,4 +13,4 @@ RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 # specify commands to be executed when container is run
-CMD uvicorn moda.api.model_api:app --host 0.0.0.0
+CMD uvicorn moda.api.model_api:app --host 0.0.0.0 --port $PORT
