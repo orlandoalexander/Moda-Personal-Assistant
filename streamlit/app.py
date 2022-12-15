@@ -3,6 +3,7 @@ import requests as requests
 from PIL import Image
 import uuid
 import webbrowser
+import sys
 
 # Import the beta_grid function
 from streamlit import beta_container
@@ -10,7 +11,7 @@ from streamlit import beta_container
 ima_url1 = "https://picsum.photos/200/300"
 
 st.image(
-            '/Users/digitalswitzerland/code/shredinc/moda/Moda-Personal-Assistant/Streamlit/header2.png',
+            sys.path[0] + '/../header2.png',
             width=700, # Manually Adjust the width of the image as per requirement
         )
 
