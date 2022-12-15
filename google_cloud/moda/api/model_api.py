@@ -1,10 +1,9 @@
 from fastapi import FastAPI, UploadFile, File
 import numpy as np
-from google.cloud import storage
 from keras.applications import efficientnet, mobilenet, resnet
 from keras.models import load_model
 from PIL import Image
-from tensorflow.python.lib.io import file_io
+from google.cloud import storage
 
 BUCKET_NAME = "moda-trained-models"
 RESIZE_SHAPE = (224, 224)
@@ -174,12 +173,16 @@ def test():
 @app.get('/init')
 def update_models():
     global LOADED_MODELS
+    storage_client = storage.Client.from_service_account_json('authenticate-gcs.json')
+    bucket = storage_client.bucket(BUCKET_NAME)
     for model_name in LOADED_MODELS.keys():
-        if model_name != 'landmarks': # TODO
-            path = f'gs://{BUCKET_NAME}/{model_name}'
-            model = load_model(path)
-            LOADED_MODELS[model_name] = model
-            print(f'{model_name} loaded')
+        #if model_name != 'landmarks': # TODO
+        for file in ['keras_metadata.pb', 'saved_model.pb', 'variables/variables.data-00000-of-00001', 'variables/variables.index']:
+            blob = bucket.blob(f"{model_name}/{file}")
+            blob.download_to_filename(f'models/{file}')
+        model = load_model('models/')
+        LOADED_MODELS[model_name] = model
+        print(f'{model_name} loaded')
     return {'message': 'All models successfully loaded'}
 
 @app.post('/predict')
