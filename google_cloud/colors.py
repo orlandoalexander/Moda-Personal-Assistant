@@ -7,9 +7,11 @@ from keras.models import load_model
 from PIL import Image
 from google.cloud import storage
 from scipy.spatial import KDTree
-from webcolors import CSS3_HEX_TO_NAMES, hex_to_rgb
+from webcolors import hex_to_rgb
 import cv2
 import matplotlib.pyplot as plt
+COLORS = {'#FF0000':'red','#FFA500':'orange','#FFFF00':'yellow','#90EE90':'light green','#228B22':'forest green', '#00FFFF': 'cyan', '#0000FF':'blue', '#4B0082': 'indigo', '#8F00FF':'violet','#A020F0':'purple','#FFC0CB':'pink','#C0C0C0':'silver','#FFD700':'gold','#F5F5DC':'beige','#6F8FAF':'denim','#800020':'burgundy','#964B00':'brown','#808080':'grey','#000000':'black','#FFFFFF':'white'}
+
 
 
 def get_pad_color(im_array):
@@ -21,6 +23,7 @@ def get_pad_color(im_array):
 def preprocess_colors(im_array, x, y):
 
     pts = (np.array(list(zip(x,y)))).astype('int')
+    print(pts)
     pts_scaled = pts - pts.min(axis=0) # pts.min(axis=0) gives min pixel in each column
 
     max_y = np.max(pts_scaled[:,1])
@@ -56,8 +59,7 @@ def preprocess_colors(im_array, x, y):
     cv2.bitwise_not(bg,bg, mask=mask) # white background where mask isn't
     im_array_preproc = bg+dst
 
-    plt.imshow(im_array_preproc)
-    plt.show()
+
 
 
     return im_array_preproc
@@ -103,10 +105,9 @@ def preprocess(im_array, resize_dim, reshape):
 def convert_rgb_to_names(rgb_tuple):
 
     # a dictionary of all the hex and their respective names in css3
-    css3_db = CSS3_HEX_TO_NAMES
     names = []
     rgb_values = []
-    for color_hex, color_name in css3_db.items():
+    for color_hex, color_name in COLORS.items():
         names.append(color_name)
         rgb_values.append(hex_to_rgb(color_hex))
 
@@ -140,7 +141,7 @@ codes, dists = cluster.vq.vq(im_array, codebook)
 # 'dists' stores euclidian distance between each observation and its nearest rgb color cluster
 
 code_counts = sorted({code: np.sum(codes == code) for code in codes}.items(), key=lambda x:x[1],reverse=True)
-color_counts = {code[1]: codebook[code[0]].astype(int) for code in code_counts[:4]}
+color_counts = {code[1]: codebook[code[0]].astype(int) for code in code_counts[:3]}
 print(color_counts)
 if (np.mean(list(color_counts.values())[0]) -3) < 5:
     sub = list(color_counts.keys())[0]
@@ -150,5 +151,12 @@ elif (np.mean(list(color_counts.values())[1]) -3) < 5:
     color_counts.pop(list(color_counts.keys())[1])
 
 color_conc = [(convert_rgb_to_names(tuple(color[1])), round((color[0]/(im_array.shape[0]-sub)*100),2)) for color in color_counts.items()]
-
 print(color_conc)
+color1 = color_conc[0][0]
+if color_conc[0][1]>=80:
+    color2 = color1
+else:
+    color2 = color_conc[1][0]
+
+
+print(color1,color2)
