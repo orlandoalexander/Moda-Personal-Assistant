@@ -281,7 +281,7 @@ class SectionPreproc():
 
         return self._X_train, self._X_test, self._y_train, self._y_test
 
-
+import pdb
 class LandmarksPreproc():
     def __init__(self, path_img: str, resize_dim: tuple, test_size: float) -> None:
         location = os.path.dirname(os.path.realpath(__file__))
@@ -293,10 +293,11 @@ class LandmarksPreproc():
         self._df_preproc_train, self._df_preproc_test = self._train_test_split()
 
     def run(self):
+        self._scales = []
         self._df_preproc_train['img'] = self._df_preproc_train.apply(lambda row: self._format_image(row[0]),axis=1)
         self._df_preproc_test['img'] = self._df_preproc_test.apply(lambda row: self._format_image(row[0]),axis=1)
-        self._X_train, self._y_train = self._df_preproc_train.iloc[:,0], np.asarray(self._df_preproc_train.iloc[:,1:])
-        self._X_test, self._y_test = self._df_preproc_test.iloc[:,0], np.asarray(self._df_preproc_test.iloc[:,1:])
+        self._X_test, self._y_test = self._df_preproc_test.iloc[:,0], np.asarray(self._df_preproc_test.apply(lambda row: row[1:]//self._scales.pop(0),axis=1))
+        self._X_train, self._y_train = self._df_preproc_train.iloc[:,0], np.asarray(self._df_preproc_train.apply(lambda row: row[1:]//self._scales.pop(0),axis=1))
         self._X_train, self._X_test = np.array(list(self._X_train)), np.array(list(self._X_test))
         print('Done!')
         return self._X_train, self._X_test, self._y_train, self._y_test
@@ -324,7 +325,11 @@ class LandmarksPreproc():
         img = mpimg.imread(full_path) # load images
         img_array = np.asarray(img)
         pad_array, self._pad_color = _format(img_array, self._resize_dim).run()
+
+        scale = img_array.shape[0]/self._resize_dim[0]
+        self._scales.append(scale)
         return pad_array
+
 
     def _train_test_split(self):
         self._df_preproc_train, self._df_preproc_test = train_test_split(self._df, test_size = self._test_size,random_state=2)
