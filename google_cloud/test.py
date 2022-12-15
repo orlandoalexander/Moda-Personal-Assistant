@@ -6,6 +6,6 @@ import requests
 
 
 url = 'http://0.0.0.0:8000/predict'
-file = {'file': open('/Users/orlandoalexander/Desktop/images/dress.png', 'rb')}
+file = {'file': open('/Users/orlandoalexander/Desktop/images/outfit2.png', 'rb')}
 response = requests.post(url=url, files=file)
 print(response.json())
