@@ -4,8 +4,6 @@ from keras.applications import efficientnet, mobilenet, resnet
 from keras.models import load_model
 from PIL import Image
 from google.cloud import storage
-from webcolors import hex_to_rgb
-from scipy.spatial import KDTree
 from scipy import cluster
 import cv2
 
@@ -42,7 +40,7 @@ MODEL_PREPROCESS = {
 }
 SECTION_CATEGORIES = {
     'upper': ['blouses', 'cardigans', 'graphic_tees', 'jackets', 'shirts', 'suiting', 'sweaters', 'tees'],
-    'lower': ['bagg_pants', 'joggers', 'pants', 'shorts', 'skirts', 'suiting'],
+    'lower': ['baggy_pants', 'joggers', 'pants', 'shorts', 'skirts', 'suiting'],
     'full body': ['dresses', 'rompers', 'suiting']
 }
 CLASSES = {
@@ -63,7 +61,6 @@ CLASSES = {
     "fabric": ["denim", "chiffon", "cotton", "leather", "faux", "knit"],
     "fit": ["tight", "loose", "conventional"]
 }
-COLORS = {'#FF0000':'red','#FFA500':'orange','#FFFF00':'yellow','#90EE90':'light green','#228B22':'forest green', '#00FFFF': 'cyan', '#0000FF':'blue', '#4B0082': 'indigo', '#8F00FF':'violet','#A020F0':'purple','#FFC0CB':'pink','#C0C0C0':'silver','#FFD700':'gold','#F5F5DC':'beige','#6F8FAF':'denim','#800020':'burgundy','#964B00':'brown','#808080':'grey','#000000':'black','#FFFFFF':'white'}
 
 CLASS_PREDS = {}
 COMPLETE_PREDS = {}
@@ -139,22 +136,21 @@ def model_predict(im_array_preproc, model_type, section):
 def get_landmarks(im_array_preproc):
     model = LOADED_MODELS['landmarks']
     prediction = model.predict(im_array_preproc)
-    scaled_coords = prediction[0]/4.30078125 # scale from original size image to scaled images
-    x = scaled_coords[::2].astype(int)+40 # account for padding
-    y = scaled_coords[1::2].astype(int)
+    scaled_coords = prediction[0] # scale from original size image to scaled images
+    x = scaled_coords[:6].astype(int) # account for padding
+    y = scaled_coords[6:].astype(int)
 
     return x,y
 
 
 def preprocess_colors(im_array, x, y):
+
     pts = (np.array(list(zip(x,y)))).astype('int')
     pts_scaled = pts - pts.min(axis=0) # pts.min(axis=0) gives min pixel in each column
-
     max_y = np.max(pts_scaled[:,1])
     max_x = np.max(pts_scaled[:,0])
     min_y = np.min(pts_scaled[:,1])
     min_x = np.min(pts_scaled[:,0])
-
 
     bl_i = (np.abs(max_y-pts_scaled[:,1]) + np.abs(pts_scaled[:,0]-min_x)).argmin()
     tl_i = (np.abs(min_y-pts_scaled[:,1]) + np.abs(pts_scaled[:,0]-min_x)).argmin()
@@ -169,7 +165,6 @@ def preprocess_colors(im_array, x, y):
     # Crop the bounding rectangle
     x,y,w,h = cv2.boundingRect(pts)
     cropped = im_array[y:y+h, x:x+w].copy()
-
     # Make mask
     mask = np.zeros(cropped.shape[:2], np.uint8) # create matrix of zeros with same shape as cropped image
     cv2.drawContours(mask, [pts_ordered], -1, (255, 255, 255), -1, cv2.LINE_AA) # create shape with corners 'pts' on mask image
@@ -178,26 +173,15 @@ def preprocess_colors(im_array, x, y):
     dst = cv2.bitwise_and(cropped, cropped, mask=mask) # bitwise and the cropped image with the mask to keep only pixels within the mask polygon bounds
 
     # Create white background
+
     bg = np.ones_like(cropped, np.uint8)*0 # matrix with same shape as cropped image
     cv2.bitwise_not(bg,bg, mask=mask) # white background where mask isn't
     im_array_preproc = bg+dst
 
+    # im = Image.fromarray(im_array_preproc)
+    # im.save('color.png')
+
     return im_array_preproc
-
-
-
-def convert_rgb_to_names(rgb_tuple):
-    # a dictionary of all the hex and their respective names in css3
-    names = []
-    rgb_values = []
-    for color_hex, color_name in COLORS.items():
-        names.append(color_name)
-        rgb_values.append(hex_to_rgb(color_hex))
-
-    kdt_db = KDTree(rgb_values)
-    distance, index = kdt_db.query(rgb_tuple)
-    return names[index]
-
 
 
 def get_colors(im_array):
@@ -224,28 +208,22 @@ def get_colors(im_array):
     elif (np.mean(list(color_counts.values())[1]) -3) < 5:
         sub = list(color_counts.keys())[1]
         color_counts.pop(list(color_counts.keys())[1])
-    print()
-    color_conc = [(convert_rgb_to_names(tuple(color[1])), round((color[0]/(im_array.shape[0]-sub)),2)) for color in color_counts.items()]
+    color_conc = [tuple((str(color[1]), round((color[0]/(im_array.shape[0]-sub)),2))) for color in color_counts.items()]
     print(color_conc)
-    color1 = color_conc[0][0]
-    if color_conc[0][1]>=0.8:
-        color2 = color3 = color1
-    else:
-        color2 = color_conc[1][0]
-    if color_conc[2][1] > 0.1:
-        color3 = color_conc[1][0]
-    else:
-        color3 = color2
+    main_color = color_conc[0][0]
 
-    return (color1,color2, color3)
+    return main_color
 
 
 def split_outfit(im_array, x, y):
     im_array = im_array.reshape((im_array.shape[1], im_array.shape[2], im_array.shape[3]))
+    print(im_array.shape)
+    print(x)
+    print(y)
     try:
         im_array_lower = im_array[-10+min(y[2],y[4]):max(y[2],y[4])+10, -30+min(x[2],x[3]):max(x[2],x[3])+30]
     except:
-        im_array_lower = im_array[min(y[2],y[4]):max(y[2],y[4]), min([2],x[3]):max(x[2],x[3])]
+        im_array_lower = im_array[min(y[2],y[4]):max(y[2],y[4]), min(x[2],x[3]):max(x[2],x[3])]
     im_array_lower = preprocess(im_array_lower, RESIZE_SHAPE, True)
     try:
         im_array_upper = im_array[-10+min(y[0],y[2]):max(y[0],y[2])+10, -30+min(x[0],x[1]):max(x[0],x[1])+30]
@@ -274,36 +252,33 @@ def predict():
     im_array_preproc_landmarks = preprocess(im_array, RESIZE_SHAPE_LANDMARKS, True)
 
     x,y = get_landmarks(im_array_preproc_landmarks)
-    #x = np.array([111, 156, 120, 153, 134, 128])
-    #y = np.array([ 44,  48, 106, 107, 226, 222])
-    print(x,y)
 
     section = model_predict(im_array_preproc, 'section', None)
     if section == 'outfit':
         im_array_upper, im_array_lower = split_outfit(im_array_preproc_landmarks, x, y)
+        # im = Image.fromarray(im_array_upper.reshape((224,224,3)))
+        # im.save('upper.png')
 
-        # TODO
-        im = Image.fromarray(im_array_upper.reshape((224,224,3)))
-        im.save('upper.png')
-        im = Image.fromarray(im_array_lower.reshape((224,224,3)))
-        im.save('lower.png')
-
+        # im = Image.fromarray(im_array_lower.reshape((224,224,3)))
+        # im.save('lower.png')
 
         CLASS_PREDS['upper'] = {}
         CLASS_PREDS['lower'] = {}
         for upper_attr_model in upper_models:
             predicted_class_name=model_predict(im_array_upper, upper_attr_model, 'upper')
             CLASS_PREDS['upper'][upper_attr_model] = predicted_class_name
-        im_array_preproc_colors = preprocess_colors(im_array_preproc_colors, x[:-2], y[:-2])
-        colors_upper = get_colors(im_array_preproc_colors)
-        CLASS_PREDS['upper']['colors'] = colors_upper
+        im_array_preproc_upper = im_array_upper.reshape((im_array_upper.shape[1],im_array_upper.shape[2],im_array_upper.shape[3]))
+        im_array_preproc_colors_upper = preprocess_colors(im_array_preproc_upper, x[:-2], y[:-2])
+        color_upper = get_colors(im_array_preproc_colors_upper)
+        CLASS_PREDS['upper']['colors'] = color_upper
 
         for lower_attr_model in lower_models:
             predicted_class_name=model_predict(im_array_lower, lower_attr_model, 'lower')
             CLASS_PREDS['lower'][lower_attr_model] = predicted_class_name
-        im_array_preproc_colors = preprocess_colors(im_array_preproc_colors, x[2:], y[2:])
-        colors_lower = get_colors(im_array_preproc)
-        CLASS_PREDS['lower']['colors'] = colors_lower
+        im_array_preproc_lower = im_array_lower.reshape((im_array_lower.shape[1],im_array_lower.shape[2],im_array_lower.shape[3]))
+        im_array_preproc_colors_lower = preprocess_colors(im_array_preproc_lower, x[:-2], y[:-2])
+        color_lower = get_colors(im_array_preproc_colors_lower)
+        CLASS_PREDS['lower']['colors'] = color_lower
     else:
         if section == 'upper':
             attr_models = upper_models
@@ -317,8 +292,9 @@ def predict():
         for attr_model in attr_models:
             predicted_class_name=model_predict(im_array_preproc, attr_model, section)
             CLASS_PREDS[attr_model] = predicted_class_name
-        colors = get_colors(im_array_preproc)
-        CLASS_PREDS['colors'] = colors
+        im_array_preproc_colors = preprocess_colors(im_array_preproc_colors, x, y)
+        color = get_colors(im_array_preproc_colors)
+        CLASS_PREDS['color'] = color
 
     print(COMPLETE_PREDS)
     return {'results': CLASS_PREDS}
@@ -327,25 +303,38 @@ def predict():
 def test():
     return {"Success": True}
 
+
 @app.get('/init')
 def update_models():
     global LOADED_MODELS
-    # storage_client = storage.Client.from_service_account_json('authenticate-gcs.json')
-    # bucket = storage_client.bucket(BUCKET_NAME)
-    # for model_name in LOADED_MODELS.keys():
-    #     for file in ['keras_metadata.pb', 'saved_model.pb', 'variables/variables.data-00000-of-00001', 'variables/variables.index']:
-    #         blob = bucket.blob(f"{model_name}/{file}")
-    #         blob.download_to_filename(f'models/{file}')
-    #     model = load_model('models/')
-    #     LOADED_MODELS[model_name] = model
-    import os
-    for i in os.listdir('models'):
-        if i != '.DS_Store':
-            model = load_model('models/'+i)
-            LOADED_MODELS[i.split('_')[1]] = model
-            print(f"{i.split('_')[1]} loaded")
-            print(LOADED_MODELS)
+    storage_client = storage.Client.from_service_account_json('authenticate-gcs.json')
+    bucket = storage_client.bucket(BUCKET_NAME)
+    for model_name in LOADED_MODELS.keys():
+        for file in ['keras_metadata.pb', 'saved_model.pb', 'variables/variables.data-00000-of-00001', 'variables/variables.index']:
+            blob = bucket.blob(f"{model_name}/{file}")
+            blob.download_to_filename(f'models/{file}')
+        model = load_model('models/')
+        LOADED_MODELS[model_name] = model
     return {'message': 'All models successfully loaded'}
+
+
+@app.get('/section')
+def get_section(file: UploadFile = File(...)):
+    try:
+        contents = file.file.read()
+        with open('section.png', 'wb') as f:
+            f.write(contents)
+    except Exception:
+        return {"message": "There was an error uploading the file"}
+    finally:
+        file.file.close()
+
+    im = Image.open('section.png')
+    im_array = np.asarray(im)
+    im_array_preproc = preprocess(im_array, RESIZE_SHAPE, True)
+    section = model_predict(im_array_preproc, 'section', None)
+    return {'section':section}
+
 
 @app.post('/predict')
 def upload(file: UploadFile = File(...)):
