@@ -1,12 +1,7 @@
 from google.cloud import bigquery, storage
 from google.oauth2 import service_account
-from io import BytesIO
-from PIL import Image
 import requests
-import matplotlib.pyplot as plt
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-import io
+
 
 credentials = service_account.Credentials.from_service_account_file('authenticate-gcs.json')
 
