@@ -136,36 +136,74 @@ if uploaded_file is not None:
     file = {'file': uploaded_file}
     response = requests.post(url=fashion_api_url, files=file)
 
-    st.markdown({response})
-
     prediction = response.json()['results']
+    st.write(prediction)
 
-    cat1 = prediction['category']
-    col1 = prediction['color']
-    fit1 = prediction['fit']
-    des1 = prediction['design']
-    sle1 = prediction.get('sleeves','N/A')
-    nec1 = prediction.get('neckline','N/A')
-    len1 = prediction.get('length', 'N/A')
-    fab1 = prediction['fabric']
+    if 'upper' not in (prediction):
+        cat1 = prediction['category']
+        col1 = prediction['color']
+        fit1 = prediction['fit']
+        des1 = prediction['design']
+        sle1 = prediction.get('sleeves','N/A')
+        nec1 = prediction.get('neckline','N/A')
+        len1 = prediction.get('length', 'N/A')
+        fab1 = prediction['fabric']
 
-    col1 = convert_rgb_to_names(col1)
+        #col1 = convert_rgb_to_names(int(col1))
 
-    data = {
-        'length' :  len1,
-        'category' : cat1,
-        'color' : col1,
-        'fit' : fit1,
-        'design' : des1,
-        'sleeves' : sle1,
-        'neckline' : nec1,
-        'fabric' : fab1
-    }
-    df = pd.DataFrame(data, index=['labeled']).T
-    column2.dataframe(df) # Set index to False to hide the index
+        data = {
+            'category' : cat1,
+            'color' : col1,
+            'fit' : fit1,
+            'length' :  len1,
+            'design' : des1,
+            'sleeves' : sle1,
+            'neckline' : nec1,
+            'fabric' : fab1
+        }
+        df = pd.DataFrame(data, index=['results']).T
+        column2.dataframe(df) # Set index to False to hide the index
+
+
+    else:
+        upper = prediction['upper']
+        lower = prediction['lower']
+        cat1 = upper['category']
+        col1 = upper['colors']
+        fit1 = upper['fit']
+        des1 = upper['design']
+        sle1 = upper.get('sleeves','-')
+        nec1 = upper.get('neckline','-')
+        len1 = upper.get('length', '-')
+        fab1 = upper['fabric']
+
+        cat2 = lower['category']
+        col2 = lower['colors']
+        fit2 = lower['fit']
+        des2 = lower['design']
+        sle2 = lower.get('sleeves','-')
+        nec2 = lower.get('neckline','-')
+        len2 = lower.get('length', '-')
+        fab2 = lower['fabric']
+
+        #col1 = convert_rgb_to_names(col1)
+        #col2 = convert_rgb_to_names(col2)
+
+        data1 = {
+            'category' : (cat1, cat2),
+            'color' : (col1, col2),
+            'fit' : (fit1, fit2),
+            'length' :  (len1, len2),
+            'design' : (des1, des2),
+            'sleeves' : (sle1, sle2),
+            'neckline' : (nec1, nec2),
+            'fabric' : (fab1, fab2)
+        }
 
 
 
+        df = pd.DataFrame(data1, index=['upper', 'lower']).T
+        column2.dataframe(df) # Set index to False to hide the index
 
 
 

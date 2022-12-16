@@ -150,13 +150,13 @@ if uploaded_file is not None:
         len1 = prediction.get('length', 'N/A')
         fab1 = prediction['fabric']
 
-        col1 = convert_rgb_to_names(col1)
+        #col1 = convert_rgb_to_names(int(col1))
 
         data = {
-            'length' :  len1,
             'category' : cat1,
             'color' : col1,
             'fit' : fit1,
+            'length' :  len1,
             'design' : des1,
             'sleeves' : sle1,
             'neckline' : nec1,
@@ -192,10 +192,10 @@ if uploaded_file is not None:
 
         data1 = {
             'section' : (upper, lower),
-            'length' :  (len1, len2),
             'category' : (cat1, cat2),
             'color' : (col1, col2),
             'fit' : (fit1, fit2),
+            'length' :  (len1, len2),
             'design' : (des1, des2),
             'sleeves' : (sle1, sle2),
             'neckline' : (nec1, nec2),
