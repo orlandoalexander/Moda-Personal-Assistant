@@ -26,13 +26,21 @@ gender = form.radio(
     "What's your gender",
     ('female', 'male'))
 
+# Create the data for the table
+data = [['Row 1, Column 1', 'Row 1, Column 2'],
+        ['Row 2, Column 1', 'Row 2, Column 2'],
+        ['Row 3, Column 1', 'Row 3, Column 2']]
+
 if uploaded_file is not None:
     column1.image(uploaded_file, caption="Your uploaded image", width=300)
-    column2.image(ima_url1, width=300)
-
+    column2.table(data,
+         header=False, # Set header to False to hide the index
+         index=False) # Set index to False to hide the index
 
 #request_url = form.text_input('Or', 'Paste URL')
 form.form_submit_button('Search')
+
+
 
 
 st.markdown("<h2 style='text-align: center; color: black;'>curated styles just for you</h2>", unsafe_allow_html=True)

@@ -31,7 +31,7 @@ data = {
 df = pd.DataFrame(data, index=['results']).T
 
 st.image(
-            '/Users/digitalswitzerland/code/shredinc/moda/Moda-Personal-Assistant/Streamlit/header2.png',
+            'header2.png',
             width=700, # Manually Adjust the width of the image as per requirement
         )
 
