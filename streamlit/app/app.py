@@ -16,7 +16,7 @@ def convert_rgb_to_names(rgb_tuple):
 
     kdt_db = KDTree(rgb_values)
     distance, index = kdt_db.query(rgb_tuple)
-    return f'closest match: {names[index]}'
+    return names[index]
 
 
 st.image(
@@ -33,9 +33,9 @@ uploaded_file = form.file_uploader("Upload an image ", type= ['png', 'jpeg', 'jp
 column1, column2= st.columns(2)
 
 
-gender = form.radio(
-    "What's your gender",
-    ('female', 'male'))
+#gender = form.radio(
+    #"What's your gender",
+    #('female', 'male'))
 
 if uploaded_file is not None:
     column1.image(uploaded_file, caption="Your uploaded image", width=300)
@@ -76,58 +76,58 @@ price6=50
 
 
 
-# Divide the screen into 3 columns
-column3, column4, column5 = st.columns(3)
+# # Divide the screen into 3 columns
+# column3, column4, column5 = st.columns(3)
 
-if uploaded_file is not None:
-    # Create the price filter slider
-    price_filter = st.slider('price in $', 1, 200, 200)  # min: 0$, max: 200$, default: 75
+# if uploaded_file is not None:
+#     # Create the price filter slider
+#     price_filter = st.slider('price in $', 1, 200, 200)  # min: 0$, max: 200$, default: 75
 
-    if price1 <= price_filter:
-        column3.image(image_url1, width=200, caption=f'Price: ${price1}')
-        column3.markdown(f'''
-        <a href={asos_url1}><button style="background-color:White;">Buy Now</button></a>
-        ''',
-        unsafe_allow_html=True)
+#     if price1 <= price_filter:
+#         column3.image(image_url1, width=200, caption=f'Price: ${price1}')
+#         column3.markdown(f'''
+#         <a href={asos_url1}><button style="background-color:White;">Buy Now</button></a>
+#         ''',
+#         unsafe_allow_html=True)
 
-    elif price4 <= price_filter:
-        column3.image(image_url4, width=200, caption=f'Price: ${price4}')
-        column3.markdown(f'''
-        <a href={asos_url4}><button style="background-color:White;">Buy Now</button></a>
-        ''',
-        unsafe_allow_html=True)
+#     elif price4 <= price_filter:
+#         column3.image(image_url4, width=200, caption=f'Price: ${price4}')
+#         column3.markdown(f'''
+#         <a href={asos_url4}><button style="background-color:White;">Buy Now</button></a>
+#         ''',
+#         unsafe_allow_html=True)
 
-    # Add the second image to the second column
+#     # Add the second image to the second column
 
-    if price2 <= price_filter:
-        column4.image(image_url2, width=200, caption=f'Price: ${price2}')
-        column4.markdown(f'''
-        <a href={asos_url2}><button style="background-color:White;">Buy Now</button></a>
-        ''',
-        unsafe_allow_html=True)
+#     if price2 <= price_filter:
+#         column4.image(image_url2, width=200, caption=f'Price: ${price2}')
+#         column4.markdown(f'''
+#         <a href={asos_url2}><button style="background-color:White;">Buy Now</button></a>
+#         ''',
+#         unsafe_allow_html=True)
 
-    elif price5 <= price_filter:
-        column4.image(image_url5, width=200, caption=f'Price: ${price5}')
-        column4.markdown(f'''
-        <a href={asos_url5}><button style="background-color:White;">Buy Now</button></a>
-        ''',
-        unsafe_allow_html=True)
+#     elif price5 <= price_filter:
+#         column4.image(image_url5, width=200, caption=f'Price: ${price5}')
+#         column4.markdown(f'''
+#         <a href={asos_url5}><button style="background-color:White;">Buy Now</button></a>
+#         ''',
+#         unsafe_allow_html=True)
 
-    # Add the third image to the third column
+#     # Add the third image to the third column
 
-    if price3 <= price_filter:
-        column5.image(image_url3, width=200, caption=f'Price: ${price3}')
-        column5.markdown(f'''
-        <a href={asos_url3}><button style="background-color:White;">Buy Now</button></a>
-        ''',
-        unsafe_allow_html=True)
+#     if price3 <= price_filter:
+#         column5.image(image_url3, width=200, caption=f'Price: ${price3}')
+#         column5.markdown(f'''
+#         <a href={asos_url3}><button style="background-color:White;">Buy Now</button></a>
+#         ''',
+#         unsafe_allow_html=True)
 
-    elif price6 <= price_filter:
-        column5.image(image_url6, width=200, caption=f'Price: ${price6}')
-        column5.markdown(f'''
-        <a href={asos_url6}><button style="background-color:White;">Buy Now</button></a>
-        ''',
-        unsafe_allow_html=True)
+#     elif price6 <= price_filter:
+#         column5.image(image_url6, width=200, caption=f'Price: ${price6}')
+#         column5.markdown(f'''
+#         <a href={asos_url6}><button style="background-color:White;">Buy Now</button></a>
+#         ''',
+#         unsafe_allow_html=True)
 
 
 
@@ -137,29 +137,30 @@ if uploaded_file is not None:
     response = requests.post(url=fashion_api_url, files=file)
 
     prediction = response.json()['results']
-    st.write(prediction)
+    #st.write(prediction)
 
-    if 'upper' not in (prediction):
+    if ('upper' not in (prediction)) and ('lower' not in prediction):
         cat1 = prediction['category']
         col1 = prediction['color']
         fit1 = prediction['fit']
         des1 = prediction['design']
-        sle1 = prediction.get('sleeves','N/A')
-        nec1 = prediction.get('neckline','N/A')
-        len1 = prediction.get('length', 'N/A')
+        sle1 = prediction.get('sleeves','-')
+        nec1 = prediction.get('neckline','-')
+        len1 = prediction.get('length', '-')
         fab1 = prediction['fabric']
 
-        #col1 = convert_rgb_to_names(int(col1))
+        col1 = tuple(int(x) for x in col1.strip("[]").split())
+        col1 = convert_rgb_to_names(col1)
 
         data = {
             'category' : cat1,
             'color' : col1,
             'fit' : fit1,
-            'length' :  len1,
+            'fabric' : fab1,
             'design' : des1,
             'sleeves' : sle1,
             'neckline' : nec1,
-            'fabric' : fab1
+            'length' :  len1
         }
         df = pd.DataFrame(data, index=['results']).T
         column2.dataframe(df) # Set index to False to hide the index
@@ -169,7 +170,7 @@ if uploaded_file is not None:
         upper = prediction['upper']
         lower = prediction['lower']
         cat1 = upper['category']
-        col1 = upper['colors']
+        col1 = upper['color']
         fit1 = upper['fit']
         des1 = upper['design']
         sle1 = upper.get('sleeves','-')
@@ -178,7 +179,7 @@ if uploaded_file is not None:
         fab1 = upper['fabric']
 
         cat2 = lower['category']
-        col2 = lower['colors']
+        col2 = lower['color']
         fit2 = lower['fit']
         des2 = lower['design']
         sle2 = lower.get('sleeves','-')
@@ -186,18 +187,20 @@ if uploaded_file is not None:
         len2 = lower.get('length', '-')
         fab2 = lower['fabric']
 
-        #col1 = convert_rgb_to_names(col1)
-        #col2 = convert_rgb_to_names(col2)
+        col1 = tuple(int(x) for x in col1.strip("[]").split())
+        col1 = convert_rgb_to_names(col1)
+        col2 = tuple(int(x) for x in col2.strip("[]").split())
+        col2 = convert_rgb_to_names(col2)
 
         data1 = {
             'category' : (cat1, cat2),
             'color' : (col1, col2),
             'fit' : (fit1, fit2),
-            'length' :  (len1, len2),
             'design' : (des1, des2),
+            'fabric' : (fab1, fab2),
             'sleeves' : (sle1, sle2),
             'neckline' : (nec1, nec2),
-            'fabric' : (fab1, fab2)
+            'length' :  (len1, len2)
         }
 
 
