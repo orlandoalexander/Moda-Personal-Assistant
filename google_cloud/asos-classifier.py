@@ -110,13 +110,23 @@ class ASOS():
         for row in result:
             img_urls = row.url_image.replace('[','').replace(']','').replace("'","").split(', ')
 
-        target_img_url = img_urls[self._image_url_index]
+        try:
 
-        f = bq_client.query(f"""
-        UPDATE moda_data.moda_asos_data
-        SET display_image = '{target_img_url}'
-        WHERE id = {self._id}
-        """)
+            target_img_url = img_urls[self._image_url_index]
+
+            bq_client.query(f"""
+            UPDATE moda_data.moda_asos_data
+            SET display_image = '{target_img_url}'
+            WHERE id = {self._id}
+            """)
+
+        except:
+            bq_client.query(f"""
+            DELETE FROM moda_data.moda_asos_data
+            WHERE id = {self._id}
+            """)
+
+            print('deleted row')
 
 
 asos = ASOS()
