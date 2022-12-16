@@ -7,18 +7,8 @@ import pandas as pd
 # Import the beta_grid function
 from streamlit import beta_container
 
-#delet when params work
-sec1= 'section'
-cat1 = 'category'
-col1 = 'color'
-fit1 = 'fit'
-des1 = 'design'
-sle1 = 'sleeves'
-nec1 = 'neckline'
-fab1 = 'fabric'
-
 data = {
-    'section' :  sec1,
+    'length' :  len1,
     'category' : cat1,
     'color' : col1,
     'fit' : fit1,
@@ -30,10 +20,10 @@ data = {
 
 df = pd.DataFrame(data, index=['results']).T
 
-st.image(
-            'header2.png',
-            width=700, # Manually Adjust the width of the image as per requirement
-        )
+# st.image(
+#             'header2.png',
+#             width=700, # Manually Adjust the width of the image as per requirement
+#         )
 
 st.markdown("<h1 style='text-align: center; color: black;'>fashion made easy</h1>", unsafe_allow_html=True)
 
@@ -143,41 +133,38 @@ if uploaded_file is not None:
 
 
 
-#fashion_api_url = 'https://taxifare.lewagon.ai/predict'
-#response = requests.get(wagon_cap_api_url, params=params)
+fashion_api_url = 'https://moda-api-service-u3dpfzvyuq-ew.a.run.app/predict'
+file = {'file': uploaded_file}
+response = requests.post(url=url, files=file)
 
-#prediction = response.json()
+prediction = response.json()['results']
+cat1 = prediction['category']
+col1 = prediction['color']
+fit1 = prediction['fit']
+des1 = prediction['design']
+sle1 = prediction.get('sleeves','N/A')
+nec1 = prediction.get('neckline','N/A')
+len1 = prediction.get('length', 'N/A')
+fab1 = prediction['fabric']
+       
 
-#pred = prediction['fare']
 
-#st.header(f'Find your style: {pred}')
-
-
-
-#params = dict(
-    #section=sec1,
-    #category=cat1,
-    #color=col1,
-    #fit=fit1,
-    #design=des1,
-    #sleeves=sle1,
-    #neckline= nec1,
-    #fabric = fab1)
-    #image_url1 = image_url1,
-    #image_url2 = image_url2,
-    #image_url3 = image_url3,
-    #image_url4 = image_url4,
-    #image_url5 = image_url5,
-    #image_url6 = image_url6,
-    #asos_url1 = asos_url1,
-    #asos_url2 = asos_url2,
-    #asos_url3 = asos_url3,
-    #asos_url4 = asos_url4,
-    #asos_url5 = asos_url5,
-    #asos_url6 = asos_url6,
-    #price1 = price1,
-    #price2 = price2,
-    #price3 = price3,
-    #price4 = price4,
-    #price5 = price5,
-    #price6 = price6)
+# params = dict(
+#     image_url1 = image_url1,
+#     image_url2 = image_url2,
+#     image_url3 = image_url3,
+#     image_url4 = image_url4,
+#     image_url5 = image_url5,
+#     image_url6 = image_url6,
+#     asos_url1 = asos_url1,
+#     asos_url2 = asos_url2,
+#     asos_url3 = asos_url3,
+#     asos_url4 = asos_url4,
+#     asos_url5 = asos_url5,
+#     asos_url6 = asos_url6,
+#     price1 = price1,
+#     price2 = price2,
+#     price3 = price3,
+#     price4 = price4,
+#     price5 = price5,
+#     price6 = price6)
