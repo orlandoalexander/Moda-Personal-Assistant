@@ -124,12 +124,10 @@ def model_predict(im_array_preproc, model_type, section):
 
     COMPLETE_PREDS[model_type] = predicted_classes
 
-    if section is not None: # filter attributes to only including attributes which are appropriate for the section
+    if model_type == 'category': # filter attributes to only including attributes which are appropriate for the section
         predicted_classes = [pred_class for pred_class in predicted_classes if pred_class[0] in SECTION_CATEGORIES[section]]
-
-    predicted_class = np.argmax(prediction[0], axis=-1)
-    predicted_class_name = CLASSES[model_type][predicted_class]
-
+    predicted_class = np.argmax([pred_class[1] for pred_class in predicted_classes])
+    predicted_class_name = predicted_classes[predicted_class][0]
     return predicted_class_name
 
 
@@ -217,9 +215,7 @@ def get_colors(im_array):
 
 def split_outfit(im_array, x, y):
     im_array = im_array.reshape((im_array.shape[1], im_array.shape[2], im_array.shape[3]))
-    print(im_array.shape)
-    print(x)
-    print(y)
+
     try:
         im_array_lower = im_array[-10+min(y[2],y[4]):max(y[2],y[4])+10, -30+min(x[2],x[3]):max(x[2],x[3])+30]
     except:
@@ -256,11 +252,6 @@ def predict():
     section = model_predict(im_array_preproc, 'section', None)
     if section == 'outfit':
         im_array_upper, im_array_lower = split_outfit(im_array_preproc_landmarks, x, y)
-        # im = Image.fromarray(im_array_upper.reshape((224,224,3)))
-        # im.save('upper.png')
-
-        # im = Image.fromarray(im_array_lower.reshape((224,224,3)))
-        # im.save('lower.png')
 
         CLASS_PREDS['upper'] = {}
         CLASS_PREDS['lower'] = {}
@@ -270,7 +261,7 @@ def predict():
         im_array_preproc_upper = im_array_upper.reshape((im_array_upper.shape[1],im_array_upper.shape[2],im_array_upper.shape[3]))
         im_array_preproc_colors_upper = preprocess_colors(im_array_preproc_upper, x[:-2], y[:-2])
         color_upper = get_colors(im_array_preproc_colors_upper)
-        CLASS_PREDS['upper']['colors'] = color_upper
+        CLASS_PREDS['upper']['color'] = color_upper
 
         for lower_attr_model in lower_models:
             predicted_class_name=model_predict(im_array_lower, lower_attr_model, 'lower')
@@ -278,7 +269,7 @@ def predict():
         im_array_preproc_lower = im_array_lower.reshape((im_array_lower.shape[1],im_array_lower.shape[2],im_array_lower.shape[3]))
         im_array_preproc_colors_lower = preprocess_colors(im_array_preproc_lower, x[:-2], y[:-2])
         color_lower = get_colors(im_array_preproc_colors_lower)
-        CLASS_PREDS['lower']['colors'] = color_lower
+        CLASS_PREDS['lower']['color'] = color_lower
     else:
         if section == 'upper':
             attr_models = upper_models
@@ -318,7 +309,7 @@ def update_models():
     return {'message': 'All models successfully loaded'}
 
 
-@app.get('/section')
+@app.post('/section')
 def get_section(file: UploadFile = File(...)):
     try:
         contents = file.file.read()
