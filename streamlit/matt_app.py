@@ -1,37 +1,26 @@
 import streamlit as st
 import requests as requests
-from PIL import Image
-import webbrowser
 import pandas as pd
 
-# Import the beta_grid function
-from streamlit import beta_container
+from scipy.spatial import KDTree
+from webcolors import (CSS3_HEX_TO_NAMES, hex_to_rgb)
+def convert_rgb_to_names(rgb_tuple):
 
-#delet when params work
-sec1= 'section'
-cat1 = 'category'
-col1 = 'color'
-fit1 = 'fit'
-des1 = 'design'
-sle1 = 'sleeves'
-nec1 = 'neckline'
-fab1 = 'fabric'
+    # a dictionary of all the hex and their respective names in css3
+    css3_db = CSS3_HEX_TO_NAMES
+    names = []
+    rgb_values = []
+    for color_hex, color_name in css3_db.items():
+        names.append(color_name)
+        rgb_values.append(hex_to_rgb(color_hex))
 
-data = {
-    'section' :  sec1,
-    'category' : cat1,
-    'color' : col1,
-    'fit' : fit1,
-    'design' : des1,
-    'sleeves' : sle1,
-    'neckline' : nec1,
-    'fabric' : fab1
-}
+    kdt_db = KDTree(rgb_values)
+    distance, index = kdt_db.query(rgb_tuple)
+    return f'closest match: {names[index]}'
 
-df = pd.DataFrame(data, index=['results']).T
 
 st.image(
-            '/Users/digitalswitzerland/code/shredinc/moda/Moda-Personal-Assistant/Streamlit/header2.png',
+           'https://i.ibb.co/2t62RcM/header2.png',
             width=700, # Manually Adjust the width of the image as per requirement
         )
 
@@ -50,7 +39,7 @@ gender = form.radio(
 
 if uploaded_file is not None:
     column1.image(uploaded_file, caption="Your uploaded image", width=300)
-    column2.dataframe(df) # Set index to False to hide the index
+
 
 #request_url = form.text_input('Or', 'Paste URL')
 form.form_submit_button('Search')
@@ -142,42 +131,97 @@ if uploaded_file is not None:
 
 
 
+if uploaded_file is not None:
+    fashion_api_url = 'https://moda-api-service-u3dpfzvyuq-ew.a.run.app/predict'
+    file = {'file': uploaded_file}
+    response = requests.post(url=fashion_api_url, files=file)
 
-#fashion_api_url = 'https://taxifare.lewagon.ai/predict'
-#response = requests.get(wagon_cap_api_url, params=params)
+    prediction = response.json()['results']
 
-#prediction = response.json()
+    '''prediction'''
 
-#pred = prediction['fare']
+    if len(prediction) == 1:
+        cat1 = prediction['category']
+        col1 = prediction['color']
+        fit1 = prediction['fit']
+        des1 = prediction['design']
+        sle1 = prediction.get('sleeves','N/A')
+        nec1 = prediction.get('neckline','N/A')
+        len1 = prediction.get('length', 'N/A')
+        fab1 = prediction['fabric']
 
-#st.header(f'Find your style: {pred}')
+        col1 = convert_rgb_to_names(col1)
+
+        data = {
+            'length' :  len1,
+            'category' : cat1,
+            'color' : col1,
+            'fit' : fit1,
+            'design' : des1,
+            'sleeves' : sle1,
+            'neckline' : nec1,
+            'fabric' : fab1
+        }
+        df = pd.DataFrame(data, index=['results']).T
+        column2.dataframe(df) # Set index to False to hide the index
+
+
+    else:
+        upper = prediction['upper']
+        lower = prediction['lower']
+        cat1 = upper['category']
+        col1 = upper['color']
+        fit1 = upper['fit']
+        des1 = upper['design']
+        sle1 = upper.get('sleeves','N/A')
+        nec1 = upper.get('neckline','N/A')
+        len1 = upper.get('length', 'N/A')
+        fab1 = upper['fabric']
+
+        cat2 = lower['category']
+        col2 = lower['color']
+        fit2 = lower['fit']
+        des2 = lower['design']
+        sle2 = lower.get('sleeves','N/A')
+        nec2 = lower.get('neckline','N/A')
+        len2 = lower.get('length', 'N/A')
+        fab2 = lower['fabric']
+
+        col1 = convert_rgb_to_names(col1)
+        col2 = convert_rgb_to_names(col2)
+
+        data1 = {
+            'section' : (upper, lower),
+            'length' :  (len1, len2),
+            'category' : (cat1, cat2),
+            'color' : (col1, col2),
+            'fit' : (fit1, fit2),
+            'design' : (des1, des2),
+            'sleeves' : (sle1, sle2),
+            'neckline' : (nec1, nec2),
+            'fabric' : (fab1, fab2)
+        }
+        df = pd.DataFrame(data1, index=['results']).T
+        column2.dataframe(df) # Set index to False to hide the index
 
 
 
-#params = dict(
-    #section=sec1,
-    #category=cat1,
-    #color=col1,
-    #fit=fit1,
-    #design=des1,
-    #sleeves=sle1,
-    #neckline= nec1,
-    #fabric = fab1)
-    #image_url1 = image_url1,
-    #image_url2 = image_url2,
-    #image_url3 = image_url3,
-    #image_url4 = image_url4,
-    #image_url5 = image_url5,
-    #image_url6 = image_url6,
-    #asos_url1 = asos_url1,
-    #asos_url2 = asos_url2,
-    #asos_url3 = asos_url3,
-    #asos_url4 = asos_url4,
-    #asos_url5 = asos_url5,
-    #asos_url6 = asos_url6,
-    #price1 = price1,
-    #price2 = price2,
-    #price3 = price3,
-    #price4 = price4,
-    #price5 = price5,
-    #price6 = price6)
+# params = dict(
+#     image_url1 = image_url1,
+#     image_url2 = image_url2,
+#     image_url3 = image_url3,
+#     image_url4 = image_url4,
+#     image_url5 = image_url5,
+#     image_url6 = image_url6,
+#     asos_url1 = asos_url1,
+#     asos_url2 = asos_url2,
+#     asos_url3 = asos_url3,
+#     asos_url4 = asos_url4,
+#     asos_url5 = asos_url5,
+#     asos_url6 = asos_url6,
+#     price1 = price1,
+#     price2 = price2,
+#     price3 = price3,
+#     price4 = price4,
+#     price5 = price5,
+#     price6 = price6)

@@ -1,29 +1,28 @@
 import streamlit as st
 import requests as requests
-from PIL import Image
-import webbrowser
 import pandas as pd
 
-# Import the beta_grid function
-from streamlit import beta_container
+from scipy.spatial import KDTree
+from webcolors import (CSS3_HEX_TO_NAMES, hex_to_rgb)
+def convert_rgb_to_names(rgb_tuple):
 
-data = {
-    'length' :  len1,
-    'category' : cat1,
-    'color' : col1,
-    'fit' : fit1,
-    'design' : des1,
-    'sleeves' : sle1,
-    'neckline' : nec1,
-    'fabric' : fab1
-}
+    # a dictionary of all the hex and their respective names in css3
+    css3_db = CSS3_HEX_TO_NAMES
+    names = []
+    rgb_values = []
+    for color_hex, color_name in css3_db.items():
+        names.append(color_name)
+        rgb_values.append(hex_to_rgb(color_hex))
 
-df = pd.DataFrame(data, index=['results']).T
+    kdt_db = KDTree(rgb_values)
+    distance, index = kdt_db.query(rgb_tuple)
+    return f'closest match: {names[index]}'
 
-# st.image(
-#             'header2.png',
-#             width=700, # Manually Adjust the width of the image as per requirement
-#         )
+
+st.image(
+           'https://i.ibb.co/2t62RcM/header2.png',
+            width=700, # Manually Adjust the width of the image as per requirement
+        )
 
 st.markdown("<h1 style='text-align: center; color: black;'>fashion made easy</h1>", unsafe_allow_html=True)
 
@@ -40,7 +39,7 @@ gender = form.radio(
 
 if uploaded_file is not None:
     column1.image(uploaded_file, caption="Your uploaded image", width=300)
-    column2.dataframe(df) # Set index to False to hide the index
+
 
 #request_url = form.text_input('Or', 'Paste URL')
 form.form_submit_button('Search')
@@ -132,21 +131,42 @@ if uploaded_file is not None:
 
 
 
+if uploaded_file is not None:
+    fashion_api_url = 'https://moda-api-service-u3dpfzvyuq-ew.a.run.app/predict'
+    file = {'file': uploaded_file}
+    response = requests.post(url=fashion_api_url, files=file)
 
-fashion_api_url = 'https://moda-api-service-u3dpfzvyuq-ew.a.run.app/predict'
-file = {'file': uploaded_file}
-response = requests.post(url=url, files=file)
+    st.markdown({response})
 
-prediction = response.json()['results']
-cat1 = prediction['category']
-col1 = prediction['color']
-fit1 = prediction['fit']
-des1 = prediction['design']
-sle1 = prediction.get('sleeves','N/A')
-nec1 = prediction.get('neckline','N/A')
-len1 = prediction.get('length', 'N/A')
-fab1 = prediction['fabric']
-       
+    prediction = response.json()['results']
+
+    cat1 = prediction['category']
+    col1 = prediction['color']
+    fit1 = prediction['fit']
+    des1 = prediction['design']
+    sle1 = prediction.get('sleeves','N/A')
+    nec1 = prediction.get('neckline','N/A')
+    len1 = prediction.get('length', 'N/A')
+    fab1 = prediction['fabric']
+
+    col1 = convert_rgb_to_names(col1)
+
+    data = {
+        'length' :  len1,
+        'category' : cat1,
+        'color' : col1,
+        'fit' : fit1,
+        'design' : des1,
+        'sleeves' : sle1,
+        'neckline' : nec1,
+        'fabric' : fab1
+    }
+    df = pd.DataFrame(data, index=['labeled']).T
+    column2.dataframe(df) # Set index to False to hide the index
+
+
+
+
 
 
 # params = dict(
