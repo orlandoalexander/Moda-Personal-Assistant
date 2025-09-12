@@ -5,7 +5,7 @@ Built with **deep learning (9 CNNs + ResNet-50 transfer learning)** and integrat
 
 Final project for Le Wagon Data Science Bootcamp, praised by industry experts for its **accuracy (70–95%)** and practical deployment on the web.  
 
-▶️ [Watch Demo Video](https://www.loom.com/share/4fbded85106a440c8c09a362d5ad8b6a?sid=b030989c-7d57-43de-9b90-448d6306d096)
+▶️ [Watch Demo Video](https://www.loom.com/share/4fbded85106a440c8c09a362d5ad8b6a?sid=b030989c-7d57-43de-9b90-448d6306d096)<br>
 💾 [Download Project Pitch (PDF)](https://github.com/user-attachments/files/22289072/Le.Wagon.pitch.pdf)<br><br>
 
 
