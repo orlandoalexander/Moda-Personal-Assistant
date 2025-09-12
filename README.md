@@ -8,15 +8,12 @@ Final project for Le Wagon Data Science Bootcamp, praised by industry experts fo
 ▶️ [Watch Demo Video](https://www.loom.com/share/4fbded85106a440c8c09a362d5ad8b6a?sid=b030989c-7d57-43de-9b90-448d6306d096)<br>
 💾 [Download Project Pitch (PDF)](https://github.com/user-attachments/files/22289072/Le.Wagon.pitch.pdf)<br><br>
 
-
 ## 🛠 Tech Stack  
 
 - **Data & Preprocessing:** NumPy, SciPy, OpenCV, Pillow  
 - **ML/DL Framework:** TensorFlow / Keras (CNN classifiers, ResNet-50 fine-tuning)  
 - **Backend:** FastAPI (with Uvicorn + Gunicorn for serving)  
-- **Deployment:** Google Cloud Run (containerised API), Google Cloud Storage  
-
-<br>  
+- **Deployment:** Google Cloud Run (containerised API), Google Cloud Storage<br><br>  
 
 ## 📝 Project Overview  
 
