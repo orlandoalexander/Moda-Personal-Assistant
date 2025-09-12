@@ -1,3 +1,0 @@
-runtime: python38
-entrypoint: gunicorn -w 4 -k uvicorn.workers.UvicornWorker model_api:app
-instance_class: F4_1G

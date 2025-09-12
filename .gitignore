@@ -1,11 +1,3 @@
-google_cloud/keys.txt
-
 /Data
+.DS_Store
 
-'Le Wagon pitch.pdf'
-
-/google_cloud/api/models/
-
-.python-version
-
-/google_cloud/models/
