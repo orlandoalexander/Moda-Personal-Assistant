@@ -11,24 +11,16 @@ Final project for Le Wagon Data Science Bootcamp, praised by industry experts fo
 
 ## 🛠 Tech Stack  
 
-- **Backend:** FastAPI (with Uvicorn + Gunicorn for serving)  
-- **ML/DL Framework:** TensorFlow / Keras (CNN classifiers, ResNet-50 fine-tuning)  
 - **Data & Preprocessing:** NumPy, SciPy, OpenCV, Pillow  
+- **ML/DL Framework:** TensorFlow / Keras (CNN classifiers, ResNet-50 fine-tuning)  
+- **Backend:** FastAPI (with Uvicorn + Gunicorn for serving)  
 - **Deployment:** Google Cloud Run (containerised API), Google Cloud Storage  
-- **Authentication & APIs:** Google OAuth, ASOS API integration  
 
 <br>  
 
 ## 📝 Project Overview  
 
-![Image 1 – Model Training](https://github.com/user-attachments/assets/img1-placeholder.png)  
-*ResNet-50 transfer learning model finetuned on 40,000 labelled clothing images.*  
-
-![Image 2 – Recommendation Engine](https://github.com/user-attachments/assets/img2-placeholder.png)  
-*KNN-powered similarity matching to suggest complementary clothing items.*  
-
-![Image 3 – API Integration](https://github.com/user-attachments/assets/img3-placeholder.png)  
-*FastAPI backend deployed on Google Cloud Run, integrated with ASOS API.*  
-
-![Image 4 – User Interaction](https://github.com/user-attachments/assets/img4-placeholder.png)  
-*Responsive web interface allowing users to get tailored fashion suggestions.*  
+[Le Wagon pitch_Page_15.pdf](https://github.com/user-attachments/files/22289335/Le.Wagon.pitch_Page_15.pdf)
+[Le Wagon pitch_Page_18.pdf](https://github.com/user-attachments/files/22289341/Le.Wagon.pitch_Page_18.pdf)
+[Le Wagon pitch_Page_17.pdf](https://github.com/user-attachments/files/22289342/Le.Wagon.pitch_Page_17.pdf)
+[Le Wagon pitch_Page_16.pdf](https://github.com/user-attachments/files/22289344/Le.Wagon.pitch_Page_16.pdf)
