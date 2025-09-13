@@ -18,9 +18,9 @@ Developed as the final project for **Le Wagon Data Science Bootcamp** (Mexico) -
 
 <p float="left">
   <img src="https://github.com/user-attachments/assets/774d07dc-61f4-4064-9f59-f65823a14ac4" width="450" />
-  <img src="https://github.com/user-attachments/assets/0faf9c14-2c22-4382-81e5-50c226333d48" width="450" />
+  <img src="https://github.com/user-attachments/assets/93edf0cd-531a-4271-97f2-bd43b905b721" width="450" />
 </p>
 <p float="left">
-  <img src="https://github.com/user-attachments/assets/93edf0cd-531a-4271-97f2-bd43b905b721" width="450" />
   <img src="https://github.com/user-attachments/assets/3dcc7e1c-edde-4b50-8a31-3c8fc0964c04" width="450" />
+  <img src="https://github.com/user-attachments/assets/0faf9c14-2c22-4382-81e5-50c226333d48" width="450" />
 </p>
