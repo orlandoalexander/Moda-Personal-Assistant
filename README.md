@@ -5,7 +5,7 @@
 Developed as the final project for **Le Wagon Data Science Bootcamp** (Mexico) - a 10-week intensive course on Machine Learning, Deep Learning, Data Engineering & Data Analysis.
 
 ▶️ [Watch Demo Video](https://www.loom.com/share/4fbded85106a440c8c09a362d5ad8b6a?sid=b030989c-7d57-43de-9b90-448d6306d096)<br>
-💾 [Download Project Pitch (PDF)](https://github.com/user-attachments/files/22289072/Le.Wagon.pitch.pdf)<br><br>
+📊 [Download Project Pitch](https://github.com/user-attachments/files/22289072/Le.Wagon.pitch.pdf)<br><br>
 
 ## 🛠 Tech Stack  
 
