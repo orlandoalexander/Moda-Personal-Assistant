@@ -2,7 +2,7 @@
 
 **AI fashion assistant** that analyses user style and outfit compatibility to deliver personalised clothing recommendations, integrated with the ASOS API for real-world product matches. Achieved **70–95% accuracy** using **9 CNNs and ResNet-50 transfer learning**, earning praise from industry experts for its performance and deployment.
 
-Developed as the capstone project for **Le Wagon Data Science Bootcamp** (Mexico) - a 10-week intensive course on Machine Learning, Deep Learning, Data Engineering & Data Analysis.
+Developed as capstone project for **Le Wagon Data Science Bootcamp** (Mexico) - a 10-week intensive course on Machine Learning, Deep Learning, Data Engineering & Data Analysis.
 
 📹 [Watch Demo Video](https://www.loom.com/share/4fbded85106a440c8c09a362d5ad8b6a?sid=b030989c-7d57-43de-9b90-448d6306d096)<br>
 🚀 [Download Project Pitch (PDF)](https://github.com/user-attachments/files/22289072/Le.Wagon.pitch.pdf)<br><br>
